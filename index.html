@@ -117,8 +117,23 @@
     color: var(--ink-soft);
   }
   footer nav { display: flex; gap: 1.6em; }
-  footer a { text-decoration: none; }
-  footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  footer a {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    transition: color 200ms ease;
+  }
+  footer a svg { display: block; }
+  footer a:hover { color: #9ff3ff; }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(5, 3, 16, 0.55) 100%);
+  }
 
   @media (prefers-reduced-motion: reduce) {
     h1 .glyph > span { transition: none !important; transform: none !important; }
@@ -129,6 +144,7 @@
 
 <canvas id="scene" role="img"
   aria-label="Fullscreen voxel-art 3D animation of a construction worker building a small brick building at night in a neon cyberpunk city. Clicking the worker startles him briefly."></canvas>
+<div class="vignette" aria-hidden="true"></div>
 
 <header>
   <span class="mono">haoxiyuan.com</span>
@@ -146,8 +162,14 @@
 <footer>
   <span class="mono">&copy; 2026 haoxi yuan</span>
   <nav class="mono" aria-label="Profiles">
-    <a href="https://github.com/Haoxi-Yuan" rel="me">github &#8599;</a>
-    <a href="https://www.linkedin.com/in/haoxi-yuan/" rel="me">linkedin &#8599;</a>
+    <a href="https://github.com/Haoxi-Yuan" rel="me">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      github
+    </a>
+    <a href="https://www.linkedin.com/in/haoxi-yuan/" rel="me">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>
+      linkedin
+    </a>
   </nav>
 </footer>
 
@@ -863,15 +885,57 @@ function init3D() {
     rock.castShadow = true; rock.receiveShadow = true;
     scene.add(rock);
   });
-  var tuftMat = new THREE.MeshStandardMaterial({ color: 0x3f8f3f, flatShading: true, roughness: 1 });
-  var tuftGeo = new THREE.ConeGeometry(1.1, 2.6, 5);
-  [[-75, 22], [-40, -28], [15, 28], [60, 34], [88, -28], [-105, -12], [30, -40], [-12, 34]]
-    .forEach(function (tf) {
-      var tuft = new THREE.Mesh(tuftGeo, tuftMat);
-      tuft.position.set(tf[0], 1.3, tf[1]);
-      tuft.castShadow = true;
-      scene.add(tuft);
-    });
+  /* 3D grass blades swaying in the wind (GPU vertex sway, one draw call) */
+  var windU = { value: 0 };
+  var bladeGeo = new THREE.PlaneGeometry(0.85, 3.4, 1, 3);
+  bladeGeo.translate(0, 1.7, 0);
+  (function () {
+    var bp = bladeGeo.attributes.position;
+    for (var vi = 0; vi < bp.count; vi++) {
+      bp.setX(vi, bp.getX(vi) * (1 - bp.getY(vi) / 3.6)); /* taper to a tip */
+    }
+  })();
+  var bladeMat = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide });
+  bladeMat.onBeforeCompile = function (shader) {
+    shader.uniforms.uTime = windU;
+    shader.vertexShader = ("uniform float uTime;\n" + shader.vertexShader).replace(
+      "#include <begin_vertex>",
+      [
+        "#include <begin_vertex>",
+        "float bendW = pow(position.y / 3.4, 1.6);",
+        "float phase = instanceMatrix[3].x * 0.35 + instanceMatrix[3].z * 0.45;",
+        "transformed.x += (sin(uTime * 1.7 + phase) * 0.7 + sin(uTime * 3.1 + phase * 1.7) * 0.25) * bendW;",
+        "transformed.z += cos(uTime * 1.3 + phase) * 0.35 * bendW;"
+      ].join("\n")
+    );
+  };
+  var BLADES = 9000;
+  var grassField = new THREE.InstancedMesh(bladeGeo, bladeMat, BLADES);
+  grassField.frustumCulled = false;
+  (function () {
+    var m4 = new THREE.Matrix4();
+    var p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+    var up = new THREE.Vector3(0, 1, 0);
+    var col = new THREE.Color();
+    var gi = 0, guard = 0;
+    while (gi < BLADES && guard++ < BLADES * 40) {
+      var gx = -145 + Math.random() * 300;
+      var gz = -46 + Math.random() * 96;
+      if (gz > 7 && gz < 21 && gx > -80 && gx < 4) continue;    /* the path */
+      if (gx > -4 && gx < 58 && gz > -13 && gz < 15) continue;  /* building site */
+      if (gx > -84 && gx < -46 && gz > 1 && gz < 17) continue;  /* supply pile */
+      p.set(gx, 0, gz);
+      q.setFromAxisAngle(up, Math.random() * Math.PI);
+      var sc = 0.7 + Math.random() * 0.9;
+      s.set(sc, sc, sc);
+      m4.compose(p, q, s);
+      grassField.setMatrixAt(gi, m4);
+      col.setHSL(0.31 + Math.random() * 0.06, 0.4 + Math.random() * 0.25, 0.26 + Math.random() * 0.16);
+      grassField.setColorAt(gi, col);
+      gi++;
+    }
+  })();
+  scene.add(grassField);
 
   /* photoreal tree billboards (Haoxi's tree.png), graded into the night */
   var trees = [];
@@ -1008,6 +1072,7 @@ function init3D() {
   var windowMats = [];
   for (var wr = 1; wr < ROWS; wr++) {
     for (var wc = 0; wc < 3; wc++) {
+      if (wr === 1 && wc === 1) continue; /* the door's bay — no window on top of it */
       var wm = new THREE.MeshBasicMaterial({ color: 0xffd93d });
       var wmesh = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.5, 1), wm);
       wmesh.position.set(BLEFT + 6 + wc * 14, wr * BRICK + BRICK / 2, frontZ);
@@ -1186,6 +1251,8 @@ function init3D() {
         state = "pickup"; t = 0;
       }
     }
+
+    windU.value = clock;
 
     /* dropped crate physics */
     if (drop && !drop.done) {
