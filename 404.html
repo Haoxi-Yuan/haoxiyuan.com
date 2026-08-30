@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 — Haoxi Yuan</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚧</text></svg>">
+<style>
+  :root {
+    --bg: #f4f1ec; --ink: #17150f; --ink-soft: #6b675c; --line: #d9d4c9;
+    --display: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+    --mono: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #131211; --ink: #ece9e2; --ink-soft: #8f8b80; --line: #2e2c28; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--display);
+    min-height: 100svh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1.4rem;
+    padding: clamp(20px, 3vw, 48px); text-align: center;
+  }
+  h1 {
+    margin: 0; font-size: clamp(2.6rem, 9vw, 5.5rem); font-weight: 500;
+    letter-spacing: -0.045em; line-height: 0.9;
+  }
+  p, a { font-family: var(--mono); font-size: 0.95rem; color: var(--ink-soft); }
+  a { color: var(--ink); text-underline-offset: 4px; }
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+</style>
+</head>
+<body>
+  <h1>404</h1>
+  <p>this floor has not been built yet.</p>
+  <a href="/">&larr; back to the construction site</a>
+</body>
+</html>

@@ -1,0 +1,1430 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haoxi's Personal Page</title>
+<meta name="description" content="Haoxi Yuan's personal page — under construction.">
+<link rel="canonical" href="https://haoxiyuan.com/">
+<meta property="og:title" content="Haoxi's Personal Page">
+<meta property="og:description" content="Research Engineer, Urban Analytics Lab, NUS. Site under construction.">
+<meta property="og:url" content="https://haoxiyuan.com/">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚧</text></svg>">
+<style>
+  /* single deliberate look: cyberpunk night, page committed to dark */
+  :root {
+    --bg: #08040f;
+    --ink: #ece9f2;
+    --ink-soft: #9a93b8;
+    --line: rgba(236, 233, 242, 0.16);
+    --display: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+    --mono: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+    --gutter: clamp(20px, 3vw, 48px);
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--display);
+    min-height: 100svh;
+    overflow: hidden;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+
+  .mono {
+    font-family: var(--mono);
+    font-size: clamp(0.85rem, 1vw, 1rem);
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+  }
+
+  header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: clamp(16px, 2vw, 28px) var(--gutter);
+    background: linear-gradient(rgba(8, 4, 15, 0.65), rgba(8, 4, 15, 0));
+  }
+
+  h1 {
+    position: fixed;
+    left: var(--gutter);
+    bottom: clamp(72px, 12vh, 130px);
+    z-index: 10;
+    pointer-events: none;
+    margin: 0;
+    font-size: clamp(1.6rem, 4.2vw, 3.4rem);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 1.04;
+    text-transform: uppercase;
+    text-shadow: 0 2px 26px rgba(5, 3, 16, 0.85);
+  }
+  h1 .line { display: block; }
+  h1 .line + .line { color: var(--ink-soft); }
+  /* rolling-glyph hover */
+  h1 .glyph {
+    display: inline-flex;
+    flex-direction: column;
+    height: 0.92em;
+    overflow: hidden;
+    vertical-align: top;
+  }
+  h1 .glyph > span {
+    height: 0.92em;
+    flex: 0 0 0.92em;
+    transition: transform 650ms cubic-bezier(.16, 1, .3, 1);
+  }
+  h1:hover .glyph > span { transform: translateY(-0.92em); }
+  h1 .word { white-space: nowrap; display: inline-block; margin-right: 0.28em; }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .noscript-note {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: var(--gutter);
+  }
+  footer {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: clamp(16px, 2vw, 28px) var(--gutter);
+    background: linear-gradient(rgba(8, 4, 15, 0), rgba(8, 4, 15, 0.7));
+    color: var(--ink-soft);
+  }
+  footer nav { display: flex; gap: 1.6em; }
+  footer a { text-decoration: none; }
+  footer a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    h1 .glyph > span { transition: none !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene" role="img"
+  aria-label="Fullscreen voxel-art 3D animation of a construction worker building a small brick building at night in a neon cyberpunk city. Clicking the worker startles him briefly."></canvas>
+
+<header>
+  <span class="mono">haoxiyuan.com</span>
+</header>
+
+<h1 id="site-name" aria-label="Haoxi's personal page, under construction"><span
+  class="line">Haoxi's Personal Page</span><span
+  class="line">Under Construction</span></h1>
+
+<noscript>
+  <p class="mono noscript-note">javascript is off, so the construction crew is on break.
+  the site is still coming soon.</p>
+</noscript>
+
+<footer>
+  <span class="mono">&copy; 2026 haoxi yuan</span>
+  <nav class="mono" aria-label="Profiles">
+    <a href="https://github.com/Haoxi-Yuan" rel="me">github &#8599;</a>
+    <a href="https://www.linkedin.com/in/haoxi-yuan/" rel="me">linkedin &#8599;</a>
+  </nav>
+</footer>
+
+<script src="assets/textures.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+<script>
+/* ---------- rolling-glyph title (accessible name kept on the h1) ---------- */
+(function () {
+  var lines = document.querySelectorAll("#site-name .line");
+  lines.forEach(function (line) {
+    var words = line.textContent.trim().split(/\s+/);
+    line.textContent = "";
+    line.setAttribute("aria-hidden", "true");
+    words.forEach(function (word) {
+      var w = document.createElement("span");
+      w.className = "word";
+      for (var i = 0; i < word.length; i++) {
+        var g = document.createElement("span");
+        g.className = "glyph";
+        for (var j = 0; j < 2; j++) {
+          var s = document.createElement("span");
+          s.textContent = word[i];
+          g.appendChild(s);
+        }
+        w.appendChild(g);
+      }
+      line.appendChild(w);
+    });
+  });
+})();
+
+/* ---------------- pixel construction scene (2D fallback) ---------------- */
+function init2D() {
+  var canvas = document.getElementById("scene");
+  var ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  var VW = 192, VH = 108;       // virtual pixel grid
+  var S = 4;                    // device pixels per virtual pixel
+
+  var darkMq = matchMedia("(prefers-color-scheme: dark)");
+  var motionMq = matchMedia("(prefers-reduced-motion: reduce)");
+
+  /* sprite palette */
+  var C = {
+    k: "#1a1c2c", h: "#ffcf40", s: "#eab08c", v: "#ff8c42", b: "#3a5bc7",
+    n: "#5a3825", o: "#c2593b", p: "#e08a5f", m: "#e8d5c4", w: "#ffffff",
+    y: "#ffd93d", u: "#ffe98a", f: "#2ecc71", x: "#8a8a9c"
+  };
+
+  function palette() {
+    return darkMq.matches ? {
+      sky: "#171e38", cloud: "#2e3860", grass: "#2e5d3a", dirt: "#4a3a2e",
+      dirtSpeck: "#3a2d22", celestial: "#e8e6d8", night: true,
+      windowDark: "#20263f", windowLit: "#ffd93d"
+    } : {
+      sky: "#a5d8e6", cloud: "#ffffff", grass: "#4caf50", dirt: "#8a5a3b",
+      dirtSpeck: "#6f4630", celestial: "#ffd93d", night: false,
+      windowDark: "#2a3550", windowLit: "#ffd93d"
+    };
+  }
+
+  var WALK_A = [
+    "....hhh....",
+    "..hhhhhhh..",
+    ".hhhhhhhhh.",
+    ".kkkkkkkkk.",
+    "...sssss...",
+    "...sksks...",
+    "...sssss...",
+    "..vvvvvvv..",
+    ".vvvbbbvvv.",
+    ".ssvbbbvss.",
+    "...bbbbb...",
+    "...bb.bb...",
+    "...bb.bb...",
+    "..nnn.nnn..",
+    "..nnn.nnn.."
+  ];
+  var WALK_B = WALK_A.slice(0, 10).concat([
+    "...bbbbb...",
+    "..bbb.bbb..",
+    ".bb.....bb.",
+    ".nn.....nn.",
+    "nnn.....nnn"
+  ]);
+  var JUMP = WALK_A.slice(0, 10).concat([
+    "...bbbbb...",
+    "..bb...bb..",
+    "..nn...nn..",
+    "...........",
+    "..........."
+  ]);
+  var CRATE = [
+    "kkkkkkkk",
+    "kpoooopk",
+    "kopoopok",
+    "kooppook",
+    "kooppook",
+    "kopoopok",
+    "kpoooopk",
+    "kkkkkkkk"
+  ];
+  var BRICK = [
+    "oooomooo",
+    "oooomooo",
+    "mmmmmmmm",
+    "omoooooo",
+    "omoooooo",
+    "mmmmmmmm",
+    "oooomooo",
+    "oooomooo"
+  ];
+  var CLOUD = [
+    "...wwww....",
+    ".wwwwwwww..",
+    "wwwwwwwwwww",
+    ".wwwwwwww.."
+  ];
+  var SUN = [
+    "..yyy..",
+    ".yyyyy.",
+    "yyuuuyy",
+    "yyuuuyy",
+    "yyuuuyy",
+    ".yyyyy.",
+    "..yyy.."
+  ];
+  var MOON = [
+    "..www..",
+    ".wwwww.",
+    "wwwwwww",
+    "wwwwwww",
+    "wwwwwww",
+    ".wwwww.",
+    "..www.."
+  ];
+
+  /* scene geometry */
+  var GROUND = 88;                    // y of ground surface
+  var BX = 118, COLS = 5, ROWS = 4;   // building: 5 tiles wide, 4 floors
+  var TOTAL = COLS * ROWS;
+  var PILE_X = 12, HOME_X = 30;       // supply pile / worker rest position
+  var SPEED = 75;                     // walk speed, virtual px per second
+
+  /* stars for night mode (deterministic) */
+  var STARS = [];
+  for (var i = 0; i < 42; i++) {
+    STARS.push([(i * 37 + 11) % VW, ((i * 53 + 7) % 55) + 3]);
+  }
+
+  /* animation state */
+  var placed = 0;
+  var state = "pickup";
+  var t = 0;                 // time in current state
+  var clock = 0;             // global time
+  var wx = HOME_X;           // worker x
+  var facing = 1;            // 1 right, -1 left
+  var carrying = false;
+  var thrown = null;         // { u, fx, fy, tx, ty }
+  var sparkles = [];         // { x, y, life }
+  var confetti = [];         // { x, y, vx, vy, col, life }
+  var fadeAlpha = 0;
+
+  function slotPos(index) {
+    var col = index % COLS, row = Math.floor(index / COLS);
+    return { x: BX + col * 8, y: GROUND - (row + 1) * 8 };
+  }
+
+  function resize() {
+    var cssW = canvas.parentElement.clientWidth || VW * 4;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    S = Math.max(2, Math.floor((cssW * dpr) / VW));
+    canvas.width = VW * S;
+    canvas.height = VH * S;
+    ctx.imageSmoothingEnabled = false;
+  }
+
+  function px(x, y, col) {
+    ctx.fillStyle = col;
+    ctx.fillRect(Math.round(x) * S, Math.round(y) * S, S, S);
+  }
+  function rect(x, y, w, h, col) {
+    ctx.fillStyle = col;
+    ctx.fillRect(Math.round(x) * S, Math.round(y) * S, Math.round(w) * S, Math.round(h) * S);
+  }
+  function spr(rows, x, y, flip) {
+    for (var r = 0; r < rows.length; r++) {
+      var line = rows[r];
+      for (var c = 0; c < line.length; c++) {
+        var ch = flip ? line[line.length - 1 - c] : line[c];
+        if (ch !== ".") px(x + c, y + r, C[ch]);
+      }
+    }
+  }
+
+  function burst(x, y, n) {
+    var cols = [C.y, C.f, C.v, C.b, "#ff5d8f", C.w];
+    for (var i = 0; i < n; i++) {
+      confetti.push({
+        x: x, y: y,
+        vx: (Math.random() - 0.5) * 70,
+        vy: -30 - Math.random() * 55,
+        col: cols[i % cols.length],
+        life: 1.6 + Math.random() * 0.8
+      });
+    }
+  }
+
+  function update(dt) {
+    clock += dt;
+    t += dt;
+    var i;
+
+    if (state === "pickup") {
+      if (t >= 0.4) { carrying = true; facing = 1; state = "walkR"; t = 0; }
+    } else if (state === "walkR") {
+      wx += SPEED * dt;
+      if (wx >= BX - 14) {
+        wx = BX - 14;
+        var to = slotPos(placed);
+        thrown = { u: 0, fx: wx + 2, fy: GROUND - 24, tx: to.x, ty: to.y };
+        carrying = false;
+        state = "throw"; t = 0;
+      }
+    } else if (state === "throw") {
+      thrown.u = Math.min(1, t / 0.45);
+      if (t >= 0.45) {
+        placed++;
+        sparkles.push({ x: thrown.tx + 4, y: thrown.ty + 4, life: 0.3 });
+        thrown = null;
+        if (placed >= TOTAL) {
+          state = "celebrate"; t = 0;
+          burst(BX + 20, GROUND - ROWS * 8 - 6, 42);
+        } else {
+          facing = -1; state = "walkL"; t = 0;
+        }
+      }
+    } else if (state === "walkL") {
+      wx -= SPEED * dt;
+      if (wx <= HOME_X) { wx = HOME_X; state = "pickup"; t = 0; }
+    } else if (state === "celebrate") {
+      if (t > 1.4 && t < 1.45 && confetti.length < 30) {
+        burst(BX + 8, GROUND - ROWS * 8 - 4, 30);
+      }
+      if (t >= 7) { state = "fadeOut"; t = 0; }
+    } else if (state === "fadeOut") {
+      fadeAlpha = Math.min(1, t / 0.5);
+      if (t >= 0.5) {
+        placed = 0; wx = HOME_X; facing = 1; carrying = false;
+        confetti.length = 0; sparkles.length = 0;
+        state = "fadeIn"; t = 0;
+      }
+    } else if (state === "fadeIn") {
+      fadeAlpha = Math.max(0, 1 - t / 0.5);
+      if (t >= 0.5) { state = "pickup"; t = 0; }
+    }
+
+    for (i = sparkles.length - 1; i >= 0; i--) {
+      sparkles[i].life -= dt;
+      if (sparkles[i].life <= 0) sparkles.splice(i, 1);
+    }
+    for (i = confetti.length - 1; i >= 0; i--) {
+      var p = confetti[i];
+      p.vy += 65 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= dt;
+      if (p.life <= 0 || p.y > GROUND + 2) confetti.splice(i, 1);
+    }
+  }
+
+  function draw() {
+    var P = palette();
+    var i, r, c;
+
+    rect(0, 0, VW, VH, P.sky);
+
+    if (P.night) {
+      for (i = 0; i < STARS.length; i++) {
+        if ((Math.floor(clock * 1.5) + i) % 7 !== 0) {
+          px(STARS[i][0], STARS[i][1], "#cfd2e8");
+        }
+      }
+      C.w = P.celestial;
+      spr(MOON, 18, 12);
+    } else {
+      spr(SUN, 18, 12);
+    }
+
+    /* clouds */
+    C.w = P.cloud;
+    var cy = [16, 30, 22];
+    var cs = [6, 4, 8];
+    for (i = 0; i < 3; i++) {
+      var cx = ((i * 67 + clock * cs[i]) % (VW + 30)) - 24;
+      spr(CLOUD, cx, cy[i]);
+    }
+    C.w = "#ffffff";
+
+    /* ground */
+    rect(0, GROUND, VW, 3, P.grass);
+    rect(0, GROUND + 3, VW, VH - GROUND - 3, P.dirt);
+    for (i = 0; i < VW; i += 3) {
+      if ((i * 7) % 13 < 3) px(i, GROUND + 5 + ((i * 5) % 11), P.dirtSpeck);
+    }
+
+    /* supply pile */
+    var remaining = TOTAL - placed - (carrying || thrown ? 1 : 0);
+    var pileSpots = [[0, 0], [9, 0], [18, 0], [4, -8], [13, -8], [9, -16]];
+    for (i = 0; i < Math.min(remaining, pileSpots.length); i++) {
+      spr(CRATE, PILE_X + pileSpots[i][0], GROUND - 8 + pileSpots[i][1]);
+    }
+
+    /* building */
+    for (i = 0; i < placed; i++) {
+      var sp = slotPos(i);
+      spr(BRICK, sp.x, sp.y);
+    }
+
+    var done = placed >= TOTAL;
+    if (done) {
+      var roofY = GROUND - ROWS * 8;
+      rect(BX - 2, roofY - 2, COLS * 8 + 4, 2, C.k);
+      /* door */
+      rect(BX + 16, GROUND - 10, 8, 10, C.k);
+      rect(BX + 17, GROUND - 9, 6, 9, "#6b4a2f");
+      px(BX + 22, GROUND - 5, C.y);
+      /* windows, floors 2-4 */
+      for (r = 1; r < ROWS; r++) {
+        var wy = GROUND - (r + 1) * 8 + 2;
+        var wxs = [BX + 4, BX + 17, BX + 30];
+        for (c = 0; c < wxs.length; c++) {
+          var lit = (Math.floor(clock * 2) + r + c) % 3 !== 0;
+          rect(wxs[c], wy, 6, 5, C.k);
+          rect(wxs[c] + 1, wy + 1, 4, 3, lit ? P.windowLit : P.windowDark);
+        }
+      }
+      /* flag */
+      var fh = state === "celebrate" ? Math.min(1, t / 0.8) : 1;
+      var poleTop = roofY - 2 - Math.round(12 * fh);
+      rect(BX + 19, poleTop, 1, roofY - 2 - poleTop, C.x);
+      var wave = Math.round(Math.sin(clock * 6));
+      rect(BX + 20 + wave, poleTop, 6, 4, C.f);
+    }
+
+    /* thrown crate: parabola from worker to slot */
+    if (thrown) {
+      var u = thrown.u;
+      var bx = thrown.fx + (thrown.tx - thrown.fx) * u;
+      var by = thrown.fy + (thrown.ty - thrown.fy) * u - 22 * Math.sin(Math.PI * u);
+      spr(CRATE, bx, by);
+    }
+
+    /* worker */
+    var wy = GROUND - 15;
+    var frame = WALK_A;
+    if (state === "walkR" || state === "walkL") {
+      frame = Math.floor(clock * 8) % 2 ? WALK_B : WALK_A;
+    } else if (state === "pickup") {
+      wy -= Math.round(2 * Math.sin(Math.PI * Math.min(1, t / 0.4)));
+    } else if (state === "throw") {
+      frame = JUMP;
+      wy -= Math.round(6 * Math.sin(Math.PI * Math.min(1, t / 0.35)));
+    } else if (state === "celebrate") {
+      frame = JUMP;
+      wy -= Math.round(5 * Math.abs(Math.sin(clock * 5)));
+    }
+    spr(frame, wx, wy, facing === -1);
+    if (carrying) spr(CRATE, wx + 1, wy - 9);
+
+    /* sparkles */
+    for (i = 0; i < sparkles.length; i++) {
+      var s = sparkles[i];
+      px(s.x, s.y - 3, C.y); px(s.x, s.y + 3, C.y);
+      px(s.x - 3, s.y, C.y); px(s.x + 3, s.y, C.y);
+    }
+
+    /* confetti */
+    for (i = 0; i < confetti.length; i++) {
+      px(confetti[i].x, confetti[i].y, confetti[i].col);
+    }
+
+    if (fadeAlpha > 0) {
+      ctx.globalAlpha = fadeAlpha;
+      rect(0, 0, VW, VH, P.sky);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  var last = 0, running = false, rafId = 0;
+  function frameLoop(now) {
+    if (!running) return;
+    var dt = Math.min(0.05, (now - last) / 1000 || 0);
+    last = now;
+    update(dt);
+    draw();
+    rafId = requestAnimationFrame(frameLoop);
+  }
+  function start() {
+    if (running || motionMq.matches) return;
+    running = true;
+    last = performance.now();
+    rafId = requestAnimationFrame(frameLoop);
+  }
+  function stop() {
+    running = false;
+    cancelAnimationFrame(rafId);
+  }
+
+  function drawStatic() {
+    /* reduced motion: show the finished building, no animation */
+    placed = TOTAL; state = "celebrate"; t = 1; clock = 1;
+    wx = HOME_X; carrying = false;
+    draw();
+  }
+
+  function refresh() {
+    resize();
+    if (motionMq.matches) { stop(); drawStatic(); } else { draw(); start(); }
+  }
+
+  window.addEventListener("resize", refresh);
+  darkMq.addEventListener("change", refresh);
+  motionMq.addEventListener("change", function () {
+    if (motionMq.matches) { stop(); drawStatic(); }
+    else { placed = 0; state = "pickup"; t = 0; carrying = false; start(); }
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stop(); else refresh();
+  });
+
+  refresh();
+}
+
+/* ------------------- 3D voxel construction scene ------------------- */
+function init3D() {
+  var canvas = document.getElementById("scene");
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  } catch (e) { return false; }
+
+  var darkMq = matchMedia("(prefers-color-scheme: dark)");
+  var motionMq = matchMedia("(prefers-reduced-motion: reduce)");
+
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+
+  var scene = new THREE.Scene();
+  scene.fog = new THREE.Fog("#0b0620", 160, 480);
+  var camera = new THREE.PerspectiveCamera(36, 16 / 9, 1, 600);
+
+  /* voxel colors (match the 2D sprite palette) */
+  var VC = {
+    k: 0x1a1c2c, h: 0xffcf40, s: 0xeab08c, v: 0xff8c42, b: 0x3a5bc7,
+    n: 0x5a3825, o: 0xc2593b, p: 0xe08a5f, m: 0xe8d5c4, w: 0xffffff
+  };
+  var W3A = [
+    "....hhh....",
+    "..hhhhhhh..",
+    ".hhhhhhhhh.",
+    ".kkkkkkkkk.",
+    "...sssss...",
+    "...sksks...",
+    "...sssss...",
+    "..vvvvvvv..",
+    ".vvvbbbvvv.",
+    ".ssvbbbvss.",
+    "...bbbbb...",
+    "...bb.bb...",
+    "...bb.bb...",
+    "..nnn.nnn..",
+    "..nnn.nnn.."
+  ];
+  var W3B = W3A.slice(0, 10).concat([
+    "...bbbbb...",
+    "..bbb.bbb..",
+    ".bb.....bb.",
+    ".nn.....nn.",
+    "nnn.....nnn"
+  ]);
+  var J3 = W3A.slice(0, 10).concat([
+    "...bbbbb...",
+    "..bb...bb..",
+    "..nn...nn..",
+    "...........",
+    "..........."
+  ]);
+
+  /* fixed cyberpunk night palette — the scene no longer follows the page theme */
+  function pal() {
+    return {
+      night: true,
+      skyTop: "#050310", skyBottom: "#2a1152", cloud: "#241b3f",
+      dirColor: "#c9b8ff", dirIntensity: 0.55,
+      hemiSky: "#3a2a6e", hemiGround: "#160e24", hemiIntensity: 0.5,
+      windowLit: 0x00e5ff, windowDark: 0x1a1030
+    };
+  }
+
+  /* lights */
+  var hemi = new THREE.HemisphereLight(0xffffff, 0x707a66, 1.0);
+  var dir = new THREE.DirectionalLight(0xffffff, 1.0);
+  dir.position.set(-60, 90, 60);
+  dir.castShadow = true;
+  dir.shadow.mapSize.set(1024, 1024);
+  dir.shadow.camera.left = -100; dir.shadow.camera.right = 100;
+  dir.shadow.camera.top = 100; dir.shadow.camera.bottom = -50;
+  dir.shadow.camera.far = 300;
+  scene.add(hemi, dir);
+  var neonCyan = new THREE.PointLight(0x00e5ff, 1.1, 130);
+  neonCyan.position.set(45, 32, 28);
+  var neonMagenta = new THREE.PointLight(0xff2d95, 1.0, 150);
+  neonMagenta.position.set(-70, 26, 30);
+  scene.add(neonCyan, neonMagenta);
+
+  /* helpers */
+  var edgeMat = new THREE.LineBasicMaterial({ color: 0x1a1c2c });
+  function edgedBox(w, h, d, color) {
+    var group = new THREE.Group();
+    var geo = new THREE.BoxGeometry(w, h, d);
+    var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: color }));
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    group.add(mesh);
+    group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    return group;
+  }
+
+  /* procedural material textures (painted in code — no image assets) */
+  function canvasTexture(size, painter, rx, ry) {
+    var cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    painter(cv.getContext("2d"), size);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(rx || 1, ry || 1);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  function paintGrass(c2, s) {
+    c2.fillStyle = "#4e8f3f";
+    c2.fillRect(0, 0, s, s);
+    for (var i = 0; i < 4200; i++) {
+      c2.strokeStyle = "rgb(" + (40 + Math.random() * 50 | 0) + "," +
+        (105 + Math.random() * 95 | 0) + "," + (30 + Math.random() * 45 | 0) + ")";
+      var x = Math.random() * s, y = Math.random() * s;
+      c2.beginPath();
+      c2.moveTo(x, y);
+      c2.lineTo(x + Math.random() * 2 - 1, y - 2 - Math.random() * 3);
+      c2.stroke();
+    }
+  }
+  function paintDirt(c2, s) {
+    c2.fillStyle = "#7a5236";
+    c2.fillRect(0, 0, s, s);
+    for (var i = 0; i < 260; i++) {
+      var l = 55 + Math.random() * 45 | 0;
+      c2.fillStyle = "rgba(" + (l + 40) + "," + l + "," + (l - 20) + "," +
+        (0.15 + Math.random() * 0.25) + ")";
+      c2.beginPath();
+      c2.ellipse(Math.random() * s, Math.random() * s,
+        2 + Math.random() * 9, 1 + Math.random() * 5, Math.random() * 3, 0, 7);
+      c2.fill();
+    }
+    for (var j = 0; j < 700; j++) {
+      c2.fillStyle = Math.random() < 0.5 ? "rgba(40,26,16,0.5)" : "rgba(190,160,120,0.35)";
+      c2.fillRect(Math.random() * s, Math.random() * s, 1.5, 1.5);
+    }
+  }
+  function paintBrick(c2, s) {
+    c2.fillStyle = "#cfc6b8";
+    c2.fillRect(0, 0, s, s);
+    var bh = s / 4, bw = s / 2;
+    for (var row = 0; row < 4; row++) {
+      var off = row % 2 ? bw / 2 : 0;
+      for (var col = -1; col < 3; col++) {
+        var x = col * bw + off, y = row * bh;
+        var r = 178 + Math.random() * 34 | 0;
+        c2.fillStyle = "rgb(" + r + "," + (72 + Math.random() * 28 | 0) + "," +
+          (45 + Math.random() * 25 | 0) + ")";
+        c2.fillRect(x + 3, y + 3, bw - 6, bh - 6);
+        c2.fillStyle = "rgba(60,25,15,0.25)";
+        c2.fillRect(x + 3, y + bh - 8, bw - 6, 5);
+      }
+    }
+    for (var i = 0; i < 500; i++) {
+      c2.fillStyle = "rgba(60,30,20," + Math.random() * 0.3 + ")";
+      c2.fillRect(Math.random() * s, Math.random() * s, 2, 2);
+    }
+  }
+  function paintWood(c2, s) {
+    c2.fillStyle = "#a8713d";
+    c2.fillRect(0, 0, s, s);
+    var pw = s / 4;
+    for (var p = 0; p < 4; p++) {
+      var l = -12 + Math.random() * 24 | 0;
+      c2.fillStyle = "rgb(" + (168 + l) + "," + (113 + l) + "," + (61 + l) + ")";
+      c2.fillRect(p * pw + 1, 0, pw - 2, s);
+      c2.strokeStyle = "rgba(90,56,25,0.5)";
+      for (var g = 0; g < 5; g++) {
+        var gx = p * pw + 4 + Math.random() * (pw - 8);
+        c2.beginPath();
+        c2.moveTo(gx, 0);
+        c2.bezierCurveTo(gx + 6, s * 0.33, gx - 6, s * 0.66, gx, s);
+        c2.stroke();
+      }
+    }
+    c2.strokeStyle = "rgba(60,38,18,0.85)";
+    c2.lineWidth = s / 14;
+    c2.strokeRect(c2.lineWidth / 2, c2.lineWidth / 2, s - c2.lineWidth, s - c2.lineWidth);
+    c2.beginPath();
+    c2.moveTo(0, 0); c2.lineTo(s, s);
+    c2.moveTo(s, 0); c2.lineTo(0, s);
+    c2.stroke();
+  }
+
+  /* prefer Haoxi's real textures (assets/textures.js); procedural is fallback */
+  var texLoader = new THREE.TextureLoader();
+  function realTex(name, rx, ry, fallback) {
+    var src = window.TEXTURES && window.TEXTURES[name];
+    if (!src) return fallback;
+    var tex = texLoader.load(src);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(rx || 1, ry || 1);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  var grassTex = realTex("grass", 6, 2.5, canvasTexture(256, paintGrass, 10, 4));
+  grassTex.wrapS = grassTex.wrapT = THREE.MirroredRepeatWrapping;
+  var dirtTex = realTex("dirt", 10, 2, canvasTexture(256, paintDirt, 10, 2));
+  dirtTex.wrapS = dirtTex.wrapT = THREE.MirroredRepeatWrapping;
+  var pathTex = realTex("path", 5, 1, canvasTexture(256, paintDirt, 5, 1));
+  pathTex.wrapS = pathTex.wrapT = THREE.MirroredRepeatWrapping;
+  var brickTex = realTex("brick", 1, 1, canvasTexture(128, paintBrick, 1, 1));
+  var woodTex = realTex("crate", 1, 1, canvasTexture(128, paintWood, 1, 1));
+  var stoneTex = realTex("stone", 2, 2, null);
+  var flagTex = realTex("flag", 1, 1, null);
+
+  var brickMat = new THREE.MeshStandardMaterial({
+    map: brickTex, bumpMap: brickTex, bumpScale: 0.3, roughness: 0.95
+  });
+  var crateMat = new THREE.MeshStandardMaterial({
+    map: woodTex, bumpMap: woodTex, bumpScale: 0.2, roughness: 0.85
+  });
+  function texturedBox(w, h, d, mat, edges) {
+    var group = new THREE.Group();
+    var geo = new THREE.BoxGeometry(w, h, d);
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    group.add(mesh);
+    if (edges) group.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    return group;
+  }
+
+  var unitBox = new THREE.BoxGeometry(1, 1, 1);
+  var voxelMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  function voxelSprite(rows, depth) {
+    var cells = [];
+    for (var r = 0; r < rows.length; r++) {
+      for (var c = 0; c < rows[r].length; c++) {
+        if (rows[r][c] !== ".") cells.push([c, rows.length - 1 - r, rows[r][c]]);
+      }
+    }
+    var mesh = new THREE.InstancedMesh(unitBox, voxelMat, cells.length * depth);
+    var m4 = new THREE.Matrix4();
+    var col = new THREE.Color();
+    var i = 0, w = rows[0].length;
+    cells.forEach(function (cell) {
+      for (var d = 0; d < depth; d++) {
+        m4.makeTranslation(cell[0] - w / 2 + 0.5, cell[1] + 0.5, d - depth / 2 + 0.5);
+        mesh.setMatrixAt(i, m4);
+        mesh.setColorAt(i, col.setHex(VC[cell[2]]));
+        i++;
+      }
+    });
+    mesh.castShadow = true;
+    return mesh;
+  }
+
+  /* ground */
+  var grassMat = new THREE.MeshStandardMaterial({
+    map: grassTex, bumpMap: grassTex, bumpScale: 0.55, roughness: 1,
+    color: 0xb8beb2
+  });
+  var dirtMat = new THREE.MeshStandardMaterial({
+    map: dirtTex, bumpMap: dirtTex, bumpScale: 0.3, roughness: 1
+  });
+  var grass = new THREE.Mesh(new THREE.BoxGeometry(340, 4, 130), grassMat);
+  grass.position.y = -2;
+  grass.receiveShadow = true;
+  var dirt = new THREE.Mesh(new THREE.BoxGeometry(340, 26, 130), dirtMat);
+  dirt.position.y = -17;
+  scene.add(grass, dirt);
+
+  /* worn path between the supply pile and the site */
+  var path = new THREE.Mesh(new THREE.BoxGeometry(78, 0.6, 11),
+    new THREE.MeshStandardMaterial({ map: pathTex, color: 0xd9c8a8, roughness: 1 }));
+  path.position.set(-33, 0.3, 14);
+  path.receiveShadow = true;
+  scene.add(path);
+
+  /* scattered rocks and grass tufts */
+  var rockMat = stoneTex
+    ? new THREE.MeshStandardMaterial({ map: stoneTex, flatShading: true, roughness: 1 })
+    : new THREE.MeshStandardMaterial({ color: 0x8d8d86, flatShading: true, roughness: 1 });
+  [[-90, -30, 3], [70, 20, 2.2], [55, -38, 4], [-25, -42, 2.6], [95, -10, 3.2]].forEach(function (rk) {
+    var rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rk[2], 0), rockMat);
+    rock.position.set(rk[0], rk[2] * 0.55, rk[1]);
+    rock.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+    rock.castShadow = true; rock.receiveShadow = true;
+    scene.add(rock);
+  });
+  var tuftMat = new THREE.MeshStandardMaterial({ color: 0x3f8f3f, flatShading: true, roughness: 1 });
+  var tuftGeo = new THREE.ConeGeometry(1.1, 2.6, 5);
+  [[-75, 22], [-40, -28], [15, 28], [60, 34], [88, -28], [-105, -12], [30, -40], [-12, 34]]
+    .forEach(function (tf) {
+      var tuft = new THREE.Mesh(tuftGeo, tuftMat);
+      tuft.position.set(tf[0], 1.3, tf[1]);
+      tuft.castShadow = true;
+      scene.add(tuft);
+    });
+
+  /* photoreal tree billboards (Haoxi's tree.png), graded into the night */
+  var trees = [];
+  if (window.TEXTURES && window.TEXTURES.tree) {
+    var treeTex = texLoader.load(window.TEXTURES.tree);
+    treeTex.encoding = THREE.sRGBEncoding;
+    var treeMat = new THREE.MeshBasicMaterial({
+      map: treeTex, transparent: true, alphaTest: 0.35,
+      side: THREE.DoubleSide, color: 0x8f83b8
+    });
+    [[-105, -18, 46], [88, -30, 40], [125, 8, 34]].forEach(function (tp) {
+      var th = tp[2], tw = th * 0.74;
+      var tr = new THREE.Mesh(new THREE.PlaneGeometry(tw, th), treeMat);
+      tr.position.set(tp[0], th / 2 - 0.5, tp[1]);
+      scene.add(tr);
+      trees.push(tr);
+    });
+  }
+
+  /* distant neon city skyline (two parallax layers) */
+  function skylineTexture() {
+    var cv = document.createElement("canvas");
+    cv.width = 1024; cv.height = 256;
+    var c2 = cv.getContext("2d");
+    var winCols = ["#00e5ff", "#ff2d95", "#ffd93d", "#7df9ff", "#b14bff"];
+    var x = 0;
+    while (x < 1024) {
+      var bw = 30 + Math.random() * 70;
+      var bh = 60 + Math.random() * 170;
+      c2.fillStyle = "#0a0716";
+      c2.fillRect(x, 256 - bh, bw, bh);
+      for (var wy = 256 - bh + 6; wy < 250; wy += 9) {
+        for (var wx2 = x + 4; wx2 < x + bw - 4; wx2 += 8) {
+          if (Math.random() < 0.3) {
+            c2.fillStyle = winCols[Math.random() * winCols.length | 0];
+            c2.globalAlpha = 0.35 + Math.random() * 0.65;
+            c2.fillRect(wx2, wy, 3, 4);
+            c2.globalAlpha = 1;
+          }
+        }
+      }
+      x += bw + (Math.random() * 12 | 0);
+    }
+    var tex = new THREE.CanvasTexture(cv);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  var skylineFar = new THREE.Mesh(new THREE.PlaneGeometry(420, 85),
+    new THREE.MeshBasicMaterial({ map: skylineTexture(), transparent: true, opacity: 0.55 }));
+  skylineFar.position.set(20, 42, -100);
+  var skylineNear = new THREE.Mesh(new THREE.PlaneGeometry(380, 78),
+    new THREE.MeshBasicMaterial({ map: skylineTexture(), transparent: true }));
+  skylineNear.position.set(-15, 38, -82);
+  scene.add(skylineFar, skylineNear);
+
+  /* clouds */
+  var cloudMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff, roughness: 1, transparent: true, opacity: 0.94
+  });
+  var cloudGeo = new THREE.SphereGeometry(1, 12, 10);
+  var clouds = [];
+  for (var ci = 0; ci < 3; ci++) {
+    var cg = new THREE.Group();
+    [[0, 0, 0, 9], [8, 1.5, -2, 6.5], [-8, 1, 2, 6], [3, 3.5, 1, 5.5], [-3, 3, -2, 5]]
+      .forEach(function (b) {
+        var cm = new THREE.Mesh(cloudGeo, cloudMat);
+        cm.position.set(b[0], b[1], b[2]);
+        cm.scale.set(b[3], b[3] * 0.55, b[3] * 0.8);
+        cg.add(cm);
+      });
+    cg.position.set(-130 + ci * 95, 52 + ci * 8, -50 - ci * 12);
+    scene.add(cg);
+    clouds.push(cg);
+  }
+
+  /* sun, moon, stars */
+  var sun = new THREE.Mesh(new THREE.SphereGeometry(7, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xffd93d }));
+  sun.position.set(-100, 80, -90);
+  var moon = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xe8e6d8 }));
+  moon.position.copy(sun.position);
+  scene.add(sun, moon);
+
+  var starPos = [];
+  for (var si = 0; si < 140; si++) {
+    starPos.push((Math.random() - 0.5) * 420, 25 + Math.random() * 130, -100 - Math.random() * 60);
+  }
+  var starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPos, 3));
+  var stars = new THREE.Points(starGeo,
+    new THREE.PointsMaterial({ color: 0xcfd2e8, size: 1.5, sizeAttenuation: false }));
+  scene.add(stars);
+
+  /* building */
+  var COLS = 5, ROWS = 4, TOTAL = COLS * ROWS, BRICK = 8;
+  var BLEFT = 6;
+  var HOME_X = -58, STOP_X = BLEFT - 14, WZ = 14;
+  var buildingGroup = new THREE.Group();
+  scene.add(buildingGroup);
+
+  function slotCenter(i) {
+    var c = i % COLS, r = Math.floor(i / COLS);
+    return new THREE.Vector3(BLEFT + c * BRICK + BRICK / 2, r * BRICK + BRICK / 2, 0);
+  }
+  var bricks = [];
+  for (var bi = 0; bi < TOTAL; bi++) {
+    var brick = texturedBox(BRICK, BRICK, BRICK * 1.75, brickMat, false);
+    brick.position.copy(slotCenter(bi));
+    brick.visible = false;
+    buildingGroup.add(brick);
+    bricks.push(brick);
+  }
+
+  /* supply pile + carried crate */
+  var pileSpots = [[0, 0], [9, 0], [18, 0], [4.5, 8], [13.5, 8], [9, 16]];
+  var pileCrates = pileSpots.map(function (p) {
+    var cr = texturedBox(8, 8, 8, crateMat, true);
+    cr.position.set(HOME_X - 16 + p[0], p[1] + 4, WZ - 6);
+    scene.add(cr);
+    return cr;
+  });
+  var crate = texturedBox(8, 8, 8, crateMat, true);
+  crate.visible = false;
+  scene.add(crate);
+
+  /* door, windows, flag (shown when the building tops out) */
+  var facade = new THREE.Group();
+  var frontZ = BRICK * 0.875 + 0.5;
+  var door = new THREE.Mesh(new THREE.BoxGeometry(8, 11, 1),
+    new THREE.MeshLambertMaterial(woodTex ? { map: woodTex } : { color: 0x6b4a2f }));
+  door.position.set(BLEFT + COLS * BRICK / 2, 5.5, frontZ);
+  facade.add(door);
+  var windowMats = [];
+  for (var wr = 1; wr < ROWS; wr++) {
+    for (var wc = 0; wc < 3; wc++) {
+      var wm = new THREE.MeshBasicMaterial({ color: 0xffd93d });
+      var wmesh = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.5, 1), wm);
+      wmesh.position.set(BLEFT + 6 + wc * 14, wr * BRICK + BRICK / 2, frontZ);
+      facade.add(wmesh);
+      windowMats.push(wm);
+    }
+  }
+  var flag = new THREE.Group();
+  var pole = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 14, 8),
+    new THREE.MeshLambertMaterial({ color: 0x8a8a9c }));
+  pole.position.y = 7;
+  var banner = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 0.5),
+    flagTex ? new THREE.MeshLambertMaterial({ map: flagTex })
+            : new THREE.MeshLambertMaterial({ color: 0x2ecc71 }));
+  banner.position.set(4, 12, 0);
+  flag.add(pole, banner);
+  flag.position.set(BLEFT + COLS * BRICK / 2, ROWS * BRICK, 0);
+  facade.add(flag);
+  var outlineGeo = new THREE.BoxGeometry(COLS * BRICK + 0.6, ROWS * BRICK + 0.6, BRICK * 1.75 + 0.6);
+  var outline = new THREE.LineSegments(new THREE.EdgesGeometry(outlineGeo),
+    new THREE.LineBasicMaterial({ color: 0x00e5ff }));
+  outline.position.set(BLEFT + COLS * BRICK / 2, ROWS * BRICK / 2, 0);
+  facade.add(outline);
+  facade.visible = false;
+  scene.add(facade);
+
+  /* neon billboard behind the site */
+  function neonSignTexture() {
+    var cv = document.createElement("canvas");
+    cv.width = 512; cv.height = 192;
+    var c2 = cv.getContext("2d");
+    c2.fillStyle = "rgba(8,5,18,0.92)";
+    c2.fillRect(0, 0, 512, 192);
+    c2.strokeStyle = "#00e5ff";
+    c2.lineWidth = 6;
+    c2.shadowColor = "#00e5ff";
+    c2.shadowBlur = 18;
+    c2.strokeRect(10, 10, 492, 172);
+    c2.textAlign = "center";
+    c2.font = "bold 56px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+    c2.shadowColor = "#ff2d95";
+    c2.shadowBlur = 22;
+    c2.fillStyle = "#ff7ec4";
+    c2.fillText("HAOXIYUAN.COM", 256, 84);
+    c2.font = "bold 32px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+    c2.shadowColor = "#00e5ff";
+    c2.fillStyle = "#9ff3ff";
+    c2.fillText("UNDER CONSTRUCTION", 256, 146);
+    var tex = new THREE.CanvasTexture(cv);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+  var signMat = new THREE.MeshBasicMaterial({
+    map: neonSignTexture(), transparent: true, side: THREE.DoubleSide
+  });
+  var sign = new THREE.Mesh(new THREE.PlaneGeometry(52, 19.5), signMat);
+  sign.position.set(26, ROWS * BRICK + 22, -12);
+  var signPoleMat = new THREE.MeshStandardMaterial({ color: 0x2c2c38, roughness: 0.6, metalness: 0.6 });
+  [-20, 20].forEach(function (dx) {
+    var sp = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, ROWS * BRICK + 24, 8), signPoleMat);
+    sp.position.set(26 + dx, (ROWS * BRICK + 24) / 2, -12);
+    sp.castShadow = true;
+    scene.add(sp);
+  });
+  scene.add(sign);
+
+  /* worker */
+  var worker = new THREE.Group();
+  var fWalkA = voxelSprite(W3A, 3);
+  var fWalkB = voxelSprite(W3B, 3);
+  var fJump = voxelSprite(J3, 3);
+  worker.add(fWalkA, fWalkB, fJump);
+  var headlamp = new THREE.PointLight(0xffe9a8, 0.9, 42);
+  headlamp.position.set(0, 16, 3);
+  worker.add(headlamp);
+  /* invisible click target around the worker */
+  var hitBox = new THREE.Mesh(new THREE.BoxGeometry(14, 18, 8),
+    new THREE.MeshBasicMaterial({ visible: false }));
+  hitBox.position.set(0, 8, 0);
+  worker.add(hitBox);
+  /* "!" startle marker */
+  var bangCv = document.createElement("canvas");
+  bangCv.width = bangCv.height = 64;
+  (function (c2) {
+    c2.font = "bold 52px 'Helvetica Neue', Helvetica, Arial, sans-serif";
+    c2.textAlign = "center";
+    c2.shadowColor = "#ff2d95";
+    c2.shadowBlur = 12;
+    c2.fillStyle = "#ffd93d";
+    c2.fillText("!", 32, 50);
+  })(bangCv.getContext("2d"));
+  var bangTex = new THREE.CanvasTexture(bangCv);
+  bangTex.encoding = THREE.sRGBEncoding;
+  var bang = new THREE.Sprite(new THREE.SpriteMaterial({ map: bangTex, transparent: true }));
+  bang.scale.set(6, 6, 1);
+  bang.position.set(0, 23, 0);
+  bang.visible = false;
+  worker.add(bang);
+  scene.add(worker);
+
+  /* confetti */
+  var confetti = [];
+  var confettiColors = [0x00e5ff, 0xff2d95, 0x7df9ff, 0xb14bff, 0xffd93d, 0x39ff88];
+  var confGeo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+  function burst(cx, cy, cz, n) {
+    for (var i = 0; i < n; i++) {
+      var m = new THREE.Mesh(confGeo,
+        new THREE.MeshBasicMaterial({ color: confettiColors[i % 6] }));
+      m.position.set(cx, cy, cz);
+      m.userData = {
+        vx: (Math.random() - 0.5) * 55, vy: 22 + Math.random() * 45,
+        vz: (Math.random() - 0.5) * 40,
+        rx: (Math.random() - 0.5) * 8, rz: (Math.random() - 0.5) * 8, life: 2.4
+      };
+      scene.add(m);
+      confetti.push(m);
+    }
+  }
+
+  /* state machine (same story as the 2D scene) */
+  var placed = 0, state = "pickup", t = 0, clock = 0;
+  var wx = HOME_X, facing = 1, carrying = false, throwArc = null;
+  var resumeState = "walkR", droppedCarrying = false, drop = null;
+  var SPEED = 42;
+
+  function update(dt) {
+    clock += dt; t += dt;
+    var i;
+
+    if (state === "pickup") {
+      if (t >= 0.4) { carrying = true; facing = 1; state = "walkR"; t = 0; }
+    } else if (state === "walkR") {
+      wx += SPEED * dt;
+      if (wx >= STOP_X) {
+        wx = STOP_X;
+        throwArc = { u: 0, from: new THREE.Vector3(wx, 19, WZ), to: slotCenter(placed) };
+        carrying = false; state = "throw"; t = 0;
+      }
+    } else if (state === "throw") {
+      throwArc.u = Math.min(1, t / 0.5);
+      if (t >= 0.5) {
+        bricks[placed].visible = true;
+        placed++;
+        throwArc = null;
+        if (placed >= TOTAL) {
+          state = "celebrate"; t = 0;
+          facade.visible = true;
+          burst(BLEFT + COLS * BRICK / 2, ROWS * BRICK + 6, 0, 50);
+        } else { facing = -1; state = "walkL"; t = 0; }
+      }
+    } else if (state === "walkL") {
+      wx -= SPEED * dt;
+      if (wx <= HOME_X) { wx = HOME_X; state = "pickup"; t = 0; }
+    } else if (state === "startle") {
+      if (t >= 0.6) {
+        t = 0;
+        state = droppedCarrying ? "regrab" : resumeState;
+      }
+    } else if (state === "regrab") {
+      if (t >= 0.45) {
+        carrying = true; drop = null;
+        state = "walkR"; t = 0;
+      }
+    } else if (state === "celebrate") {
+      if (t >= 7) { state = "sink"; t = 0; }
+    } else if (state === "sink") {
+      var u = Math.min(1, t / 0.7);
+      buildingGroup.position.y = -(ROWS * BRICK + 6) * u * u;
+      facade.position.y = buildingGroup.position.y;
+      if (t >= 0.7) {
+        bricks.forEach(function (b) { b.visible = false; });
+        buildingGroup.position.y = 0; facade.position.y = 0;
+        facade.visible = false;
+        placed = 0; wx = HOME_X; facing = 1; carrying = false;
+        drop = null;
+        state = "pickup"; t = 0;
+      }
+    }
+
+    /* dropped crate physics */
+    if (drop && !drop.done) {
+      drop.vy -= 260 * dt;
+      drop.y += drop.vy * dt;
+      if (drop.y <= 4) {
+        drop.y = 4;
+        if (Math.abs(drop.vy) < 25) { drop.vy = 0; drop.done = true; }
+        else drop.vy = -drop.vy * 0.4;
+      }
+    }
+
+    clouds.forEach(function (cg, i2) {
+      cg.position.x += (3 + i2 * 2) * dt;
+      if (cg.position.x > 180) cg.position.x = -180;
+    });
+
+    for (i = confetti.length - 1; i >= 0; i--) {
+      var p = confetti[i], ud = p.userData;
+      ud.vy -= 70 * dt;
+      p.position.x += ud.vx * dt;
+      p.position.y += ud.vy * dt;
+      p.position.z += ud.vz * dt;
+      p.rotation.x += ud.rx * dt;
+      p.rotation.z += ud.rz * dt;
+      ud.life -= dt;
+      if (ud.life <= 0 || p.position.y < 1) {
+        scene.remove(p);
+        p.material.dispose();
+        confetti.splice(i, 1);
+      }
+    }
+  }
+
+  var pointer = { x: 0, y: 0 };
+  var ray = new THREE.Raycaster();
+  var rayV = new THREE.Vector2();
+  function workerHit(clientX, clientY) {
+    rayV.set((clientX / window.innerWidth) * 2 - 1,
+      -(clientY / window.innerHeight) * 2 + 1);
+    ray.setFromCamera(rayV, camera);
+    return ray.intersectObject(hitBox, false).length > 0;
+  }
+  window.addEventListener("pointermove", function (e) {
+    pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
+    canvas.style.cursor = workerHit(e.clientX, e.clientY) ? "pointer" : "";
+  });
+  window.addEventListener("pointerdown", function (e) {
+    if (!workerHit(e.clientX, e.clientY)) return;
+    if (state !== "walkR" && state !== "walkL" && state !== "pickup") return;
+    resumeState = state === "walkL" ? "walkL" : state;
+    droppedCarrying = carrying;
+    if (carrying) {
+      carrying = false;
+      drop = { x: wx + (facing === 1 ? 7 : -7), y: 20, vy: 15, done: false };
+    }
+    state = "startle";
+    t = 0;
+  });
+
+  var themeApplied = null;
+  var skyTexCache = {};
+  function applyTheme(P) {
+    var key = P.night ? "n" : "d";
+    if (themeApplied === key) return;
+    themeApplied = key;
+    if (!skyTexCache[key]) {
+      var cv = document.createElement("canvas");
+      cv.width = 2; cv.height = 256;
+      var c2 = cv.getContext("2d");
+      var gr = c2.createLinearGradient(0, 0, 0, 256);
+      gr.addColorStop(0, P.skyTop);
+      gr.addColorStop(1, P.skyBottom);
+      c2.fillStyle = gr;
+      c2.fillRect(0, 0, 2, 256);
+      var tex = new THREE.CanvasTexture(cv);
+      tex.encoding = THREE.sRGBEncoding;
+      skyTexCache[key] = tex;
+    }
+    scene.background = skyTexCache[key];
+    scene.fog.color.set(P.skyBottom);
+    dir.color.set(P.dirColor);
+    dir.intensity = P.dirIntensity;
+    hemi.color.set(P.hemiSky);
+    hemi.groundColor.set(P.hemiGround);
+    hemi.intensity = P.hemiIntensity;
+    cloudMat.color.set(P.cloud);
+    sun.visible = !P.night;
+    moon.visible = P.night;
+    stars.visible = P.night;
+  }
+
+  function render() {
+    var P = pal();
+    applyTheme(P);
+
+    /* worker pose */
+    var frame = fWalkA, wy = 0;
+    if (state === "walkR" || state === "walkL") {
+      frame = Math.floor(clock * 8) % 2 ? fWalkB : fWalkA;
+    } else if (state === "pickup") {
+      wy = 2 * Math.sin(Math.PI * Math.min(1, t / 0.4));
+    } else if (state === "throw") {
+      frame = fJump;
+      wy = 6 * Math.sin(Math.PI * Math.min(1, t / 0.35));
+    } else if (state === "startle") {
+      frame = fJump;
+      wy = 7 * Math.abs(Math.sin(t * 10)) * Math.max(0, 1 - t / 0.55);
+    } else if (state === "regrab") {
+      wy = 2 * Math.sin(Math.PI * Math.min(1, t / 0.45));
+    } else if (state === "celebrate") {
+      frame = fJump;
+      wy = 5 * Math.abs(Math.sin(clock * 5));
+    }
+    bang.visible = state === "startle";
+    fWalkA.visible = frame === fWalkA;
+    fWalkB.visible = frame === fWalkB;
+    fJump.visible = frame === fJump;
+    worker.position.set(wx, wy, WZ);
+    worker.rotation.y = facing === 1 ? 0 : Math.PI;
+
+    /* crate */
+    if (carrying) {
+      crate.visible = true;
+      crate.rotation.y = 0;
+      crate.position.set(wx, wy + 20, WZ);
+    } else if (throwArc) {
+      crate.visible = true;
+      crate.position.lerpVectors(throwArc.from, throwArc.to, throwArc.u);
+      crate.position.y += 16 * Math.sin(Math.PI * throwArc.u);
+      crate.rotation.y = throwArc.u * Math.PI;
+    } else if (drop) {
+      crate.visible = true;
+      crate.rotation.y = 0;
+      crate.position.set(drop.x, drop.y, WZ);
+    } else {
+      crate.visible = false;
+    }
+
+    /* supply pile */
+    var remaining = TOTAL - placed - (carrying || throwArc || drop ? 1 : 0);
+    pileCrates.forEach(function (cr, i2) { cr.visible = i2 < Math.min(remaining, 6); });
+
+    /* facade */
+    if (facade.visible) {
+      windowMats.forEach(function (wm2, i2) {
+        var lit = (Math.floor(clock * 2) + i2) % 3 !== 0;
+        wm2.color.setHex(lit ? (i2 % 2 ? 0x00e5ff : 0xff2d95) : P.windowDark);
+      });
+      var fh = state === "celebrate" ? Math.min(1, t / 0.8) : 1;
+      flag.scale.set(1, Math.max(0.001, fh), 1);
+      banner.rotation.y = Math.sin(clock * 5) * 0.4;
+    }
+
+    /* neon sign flicker */
+    signMat.opacity = Math.random() < 0.04 ? 0.55 + Math.random() * 0.3 : 0.96;
+
+    /* camera: slow orbit + mouse parallax */
+    var ang = Math.sin(clock * 0.12) * 0.1 + pointer.x * 0.08;
+    camera.position.set(Math.sin(ang) * camRadius - 8, 30 - pointer.y * 6, Math.cos(ang) * camRadius);
+    camera.lookAt(-8, 16, 0);
+
+    /* billboard trees face the camera */
+    trees.forEach(function (tr) {
+      tr.rotation.y = Math.atan2(camera.position.x - tr.position.x,
+        camera.position.z - tr.position.z);
+    });
+    renderer.render(scene, camera);
+  }
+
+  var camRadius = 120;
+  function resize() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(w, h, true);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    /* pull back on narrow screens so the site stays in frame */
+    camRadius = 120 * Math.max(1, Math.sqrt(1.78 / camera.aspect));
+  }
+
+  var last = 0, running = false, rafId = 0;
+  function loop(now) {
+    if (!running) return;
+    var dt = Math.min(0.05, (now - last) / 1000 || 0);
+    last = now;
+    update(dt);
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+  function start() {
+    if (running || motionMq.matches) return;
+    running = true;
+    last = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+  function stop() { running = false; cancelAnimationFrame(rafId); }
+
+  function staticScene() {
+    bricks.forEach(function (b) { b.visible = true; });
+    placed = TOTAL; state = "celebrate"; t = 1;
+    facade.visible = true;
+    update(0);
+    render();
+  }
+
+  function refresh() {
+    resize();
+    if (motionMq.matches) { stop(); staticScene(); } else { render(); start(); }
+  }
+
+  window.addEventListener("resize", refresh);
+  darkMq.addEventListener("change", function () { render(); });
+  motionMq.addEventListener("change", refresh);
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) stop(); else refresh();
+  });
+
+  refresh();
+  return true;
+}
+
+/* prefer the 3D scene; fall back to the 2D canvas when WebGL is unavailable */
+(function () {
+  var webgl = false;
+  if (window.THREE) {
+    try {
+      var test = document.createElement("canvas");
+      webgl = !!(window.WebGLRenderingContext &&
+        (test.getContext("webgl") || test.getContext("experimental-webgl")));
+    } catch (e) { webgl = false; }
+  }
+  var used3D = false;
+  if (webgl) {
+    try { used3D = init3D() === true; } catch (e) { used3D = false; }
+  }
+  if (!used3D) init2D();
+})();
+</script>
+</body>
+</html>
