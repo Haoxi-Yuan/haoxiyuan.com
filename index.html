@@ -1300,20 +1300,47 @@ function init3D() {
   }
 
 
-  /* Persistent right foundation brick. Existing worker/build loop is unchanged. */
-  var portalAnchor = new THREE.Vector3(42, 4, 7.8);
-  var serviceBrick = new THREE.Mesh(new THREE.BoxGeometry(8,8,14),brickMat);
-  serviceBrick.position.set(42,4,0); serviceBrick.castShadow=true;scene.add(serviceBrick);
+  /* Persistent right foundation brick, with the portal cut into its face rather than hung
+     in front of it: the front face is replaced by one with a round opening, a brick-lined
+     throat runs back into the block, and the swirl sits at the bottom of that recess. */
+  var PORTAL_R = 2.35, PORTAL_DEPTH = 1.1, BRICK_FRONT = 7;
+  var portalAnchor = new THREE.Vector3(42, 4, BRICK_FRONT);
+  var hiddenFace = new THREE.MeshBasicMaterial({ visible: false });
+  var serviceBrick = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 14),
+    [brickMat, brickMat, brickMat, brickMat, hiddenFace, brickMat]);
+  serviceBrick.position.set(42, 4, 0); serviceBrick.castShadow = true; serviceBrick.receiveShadow = true;
+  scene.add(serviceBrick);
+  /* The new face keeps the box face's own UVs (0..1 across 8 units), so the courses meet
+     the sides of the block without a seam. */
+  var faceShape = new THREE.Shape();
+  faceShape.moveTo(-4, -4); faceShape.lineTo(4, -4); faceShape.lineTo(4, 4); faceShape.lineTo(-4, 4); faceShape.lineTo(-4, -4);
+  var opening = new THREE.Path(); opening.absarc(0, 0, PORTAL_R, 0, Math.PI * 2, true); faceShape.holes.push(opening);
+  var faceGeo = new THREE.ShapeGeometry(faceShape, 64);
+  var faceUv = faceGeo.attributes.uv, facePos = faceGeo.attributes.position;
+  for (var fi = 0; fi < faceUv.count; fi++) faceUv.setXY(fi, (facePos.getX(fi) + 4) / 8, (facePos.getY(fi) + 4) / 8);
+  var brickFace = new THREE.Mesh(faceGeo, brickMat);
+  brickFace.position.set(42, 4, BRICK_FRONT); brickFace.receiveShadow = true; brickFace.castShadow = true;
+  scene.add(brickFace);
+  /* The throat: brick courses running into the block, lit from the swirl at its end. */
+  var throatTex = brickTex.clone(); throatTex.wrapS = throatTex.wrapT = THREE.RepeatWrapping;
+  throatTex.repeat.set(1.85, PORTAL_DEPTH / 8); throatTex.needsUpdate = true;
+  var throatMat = new THREE.MeshStandardMaterial({ map: throatTex, bumpMap: throatTex, bumpScale: 0.3, roughness: 0.95,
+    side: THREE.BackSide, emissive: 0x0c3438, emissiveIntensity: 0.55 });
+  var throat = new THREE.Mesh(new THREE.CylinderGeometry(PORTAL_R, PORTAL_R, PORTAL_DEPTH, 64, 1, true), throatMat);
+  throat.rotation.x = Math.PI / 2; throat.position.set(42, 4, BRICK_FRONT - PORTAL_DEPTH / 2);
+  scene.add(throat);
   var portalUniforms={uTime:{value:0},uOpen:{value:0}};
   var portalMaterial=new THREE.ShaderMaterial({uniforms:portalUniforms,
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:'varying vec2 vUv;uniform float uTime;uniform float uOpen;void main(){vec2 p=vUv*2.-1.;float r=length(p);float a=atan(p.y,p.x);float swirl=pow(max(0.,sin(a*3.+log(r+.04)*7.-uTime*2.)),9.)*.12;float rim=exp(-pow((r-.83)*18.,2.));float rings=pow(max(0.,sin(log(r+.02)*15.-uTime*1.8)),20.)*.15;vec3 c=vec3(.005,.009,.021)+vec3(.11,.72,.77)*(rim*.9+swirl*r+rings*r);gl_FragColor=vec4(c,1.);}'
   });
-  var portalDisc=new THREE.Mesh(new THREE.CircleGeometry(2.95,64),portalMaterial);
-  portalDisc.position.copy(portalAnchor);scene.add(portalDisc);
-  var portalRim=new THREE.Mesh(new THREE.TorusGeometry(3.05,.12,8,48),new THREE.MeshStandardMaterial({color:0x536e7c,emissive:0x38aab5,emissiveIntensity:.65,metalness:.7,roughness:.28}));
-  portalRim.position.copy(portalAnchor);scene.add(portalRim);
+  var portalDisc=new THREE.Mesh(new THREE.CircleGeometry(PORTAL_R,64),portalMaterial);
+  portalDisc.position.set(42, 4, BRICK_FRONT - PORTAL_DEPTH + 0.02);scene.add(portalDisc);
+  /* A steel collar dressing the cut edge, half sunk into the face. */
+  var portalRim=new THREE.Mesh(new THREE.TorusGeometry(PORTAL_R + 0.04,.1,10,72),new THREE.MeshStandardMaterial({color:0x536e7c,emissive:0x38aab5,emissiveIntensity:.45,metalness:.75,roughness:.3}));
+  portalRim.position.set(42, 4, BRICK_FRONT);scene.add(portalRim);
   var portalLight=new THREE.PointLight(0x75dfda,.9,23);portalLight.position.set(42,5,13);scene.add(portalLight);
+  var throatLight=new THREE.PointLight(0x6fe3dc,1.1,5,2);throatLight.position.set(42,4,BRICK_FRONT - PORTAL_DEPTH + 0.35);scene.add(throatLight);
   var portalLink=document.getElementById('service-portal'),portalProjected=new THREE.Vector3();
   var portalStart=0,portalFrom=new THREE.Vector3(),portalLookFrom=new THREE.Vector3(-8,16,0);
   portalLink.addEventListener('click',function(e){
