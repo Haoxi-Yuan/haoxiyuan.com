@@ -31,7 +31,7 @@ const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 let renderer,city,tunnel,camera,tunnelCamera,exitLight,headLight,lampPool=[],lampSpots=[],labels=[],raf=0,last=0,renderCount=0;
 let daylight=null,places=[],shopParts=new Map(),nightGlow=[],facadeParts=[],sunlit={},lastShopKey='';
 let interior=null,interiorLoad=null,doorSpots=[],interiorKeys={},interiorZone='';
-let handling=null,handlingLoad=null;
+let handling=null,handlingLoad=null,loadingProgress=0;
 let loadVersion=0,modelRoot=null,stats={};
 const point=new THREE.Vector3();
 const bendGLSL=`
@@ -857,22 +857,38 @@ function init(){
 async function load(){
   const version=++loadVersion;announceCity();$('retry').hidden=true;phase('loading');$('threshold').hidden=false;$('threshold').style.opacity='1';$('city-mechanism').hidden=false;$('city-mechanism').setAttribute('aria-busy','true');$('location-control').disabled=true;$('city-previous').disabled=$('city-next').disabled=true;
   $('loading-status').textContent='Opening '+CITIES[cityIndex].name+'…';
+  loadingProgress=0;state.holding=false;
   try{
     init();
     const manager=new THREE.LoadingManager();
     const decoder=new DRACOLoader(manager).setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
     const loader=new GLTFLoader(manager).setDRACOLoader(decoder);
+    // The tunnel is small and the city is not, so the ride starts as soon as the tunnel is
+    // in and the city keeps downloading behind it; the ride waits at the mouth if it must.
+    const cityName=CITIES[cityIndex].name;
+    // The tunnel gets the connection to itself first, so the ride can begin within a couple
+    // of seconds; the city starts downloading the moment the tunnel is in.
+    let cityDownload=null;
+    const startCity=()=>{
+      cityDownload=cityDownload||loader.loadAsync('../assets/folded-city/'+CITIES[cityIndex].model,event=>{
+        if(!event.total||version!==loadVersion)return;
+        loadingProgress=event.loaded/event.total;
+        if(state.phase==='loading'||state.holding)$('loading-status').textContent='Opening '+cityName+'… '+Math.round(loadingProgress*100)+'%';
+      });
+      cityDownload.catch(()=>{});
+      return cityDownload;
+    };
     let timer;
     const result=await Promise.race([
       Promise.all([
-        loader.loadAsync('../assets/folded-city/portal-tunnel-v16.glb'),
-        loader.loadAsync('../assets/folded-city/'+CITIES[cityIndex].model),
+        loader.loadAsync('../assets/folded-city/portal-tunnel-v16.glb').then(gltf=>{startCity();return gltf;}),
+        null,
         CITIES[cityIndex].places?fetch(CITIES[cityIndex].places).then(response=>{if(!response.ok)throw new Error('Place records could not be loaded.');return response.json();}):Promise.resolve({places:[]})
       ]),
       new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('The 3D scene took too long to load.')),60000)})
-    ]).finally(()=>{clearTimeout(timer);decoder.dispose();});
+    ]).finally(()=>clearTimeout(timer));
     if(version!==loadVersion)return;
-    tunnel.add(result[0].scene);modelRoot=result[1].scene;
+    tunnel.add(result[0].scene);
     result[0].scene.traverse(o=>{
       if(o.userData.tunnelLamps)for(const p of JSON.parse(o.userData.tunnelLamps))lampSpots.push(new THREE.Vector3(...p));
       if(!o.isMesh)return;
@@ -884,6 +900,14 @@ async function load(){
     });
     // One-off reflection probe of the tunnel itself (lamp lenses, the daylit mouth) for wet floor and metal.
     const probe=new THREE.PMREMGenerator(renderer);tunnel.environment=probe.fromScene(tunnel,.04,.1,200).texture;probe.dispose();
+    const direct=state.skip||reduced.matches||new URLSearchParams(location.search).has('street');
+    if(!direct){phase('tunnel');state.time=0;state.holding=false;$('loading-status').textContent='';$('pause').hidden=false;schedule();}
+    const cityResult=await Promise.race([
+      startCity(),
+      new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('The 3D scene took too long to load.')),180000)})
+    ]).finally(()=>{clearTimeout(timer);decoder.dispose();});
+    if(version!==loadVersion)return;
+    modelRoot=cityResult.scene;
     modelRoot.traverse(o=>{
       if(!o.isMesh)return;
       o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;
@@ -909,8 +933,9 @@ async function load(){
     doorSpots=places.map((place,slot)=>place.interior?makeDoorSpot(place,slot):null).filter(Boolean);
     registerTimedParts(modelRoot);buildLampRig();startClock();populateStreet();
     stats={meshes:0,triangles:0};modelRoot.traverse(o=>{if(o.isMesh){stats.meshes++;stats.triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-    if(state.skip||reduced.matches||new URLSearchParams(location.search).has('street'))showCity();
-    else{phase('tunnel');state.time=0;$('loading-status').textContent='';$('pause').hidden=false;schedule();}
+    state.holding=false;
+    if(direct||state.skip)showCity();
+    else schedule();
   }catch(error){
     if(version!==loadVersion)return;
     console.error('Folded City:',error);fallback(error.message);
@@ -929,7 +954,11 @@ function render(dt){
   if(state.phase==='interior'){renderCount++;interiorFrame(dt);return;}
   animateMechanism(dt);
   if(state.phase==='tunnel'){
+    // Until the city has arrived the ride stops short of the mouth and says how far along it is.
+    const HOLD=.8*9.5;
     if(!state.paused)state.time+=dt;
+    state.holding=!state.loaded&&state.time>=HOLD;
+    if(state.holding){state.time=HOLD;$('loading-status').textContent='Opening '+CITIES[cityIndex].name+'… '+Math.round(loadingProgress*100)+'%';}
     const p=clamp(state.time/9.5,0,1),travel=smooth(p);
     tunnelCamera.position.set(Math.sin(p*Math.PI*2)*.22*(1-p),2.25+Math.sin(p*Math.PI)*.35,4-travel*86);
     tunnelCamera.lookAt(0,3,-90);tunnelCamera.rotation.z=Math.sin(p*Math.PI)*.07;
@@ -938,7 +967,7 @@ function render(dt){
     exitLight.intensity=.6+p*1.6;
     const cz=tunnelCamera.position.z,near=lampSpots.filter(s=>s.z<cz+4&&s.z>cz-26).sort((a,b)=>b.z-a.z);
     lampPool.forEach((lamp,i)=>{const s=near[i];lamp.intensity=s?4.5*clamp((26-(cz-s.z))/6,0,1)*clamp((cz+4-s.z)/2,0,1):0;if(s)lamp.position.copy(s);});
-    $('threshold').style.opacity=String(1-smooth((p-.12)/.2));
+    $('threshold').style.opacity=state.holding?'1':String(1-smooth((p-.12)/.2));
     $('veil').style.background=p>.84?'#e9ede6':'#020205';
     $('veil').style.opacity=String(p<.22?(1-smooth(p/.22))*.96:smooth((p-.88)/.12));
     renderer.render(tunnel,tunnelCamera);
