@@ -1,0 +1,46 @@
+{
+ "characters": {
+  "remy": {
+   "file": "people/remy.glb",
+   "hips": 2.0915,
+   "triangles": 16052,
+   "from": "Angry.fbx",
+   "bytes": 1045856
+  },
+  "ch08": {
+   "file": "people/ch08.glb",
+   "hips": 0.9775,
+   "triangles": 16496,
+   "from": "Standing W_Briefcase Idle (1).fbx",
+   "bytes": 1580428
+  }
+ },
+ "clips": {
+  "angry": {
+   "file": "people/clip-angry.glb",
+   "hips": 2.0915,
+   "seconds": 19.167,
+   "from": "Angry.fbx"
+  },
+  "sitting-clap": {
+   "file": "people/clip-sitting-clap.glb",
+   "hips": 2.0915,
+   "seconds": 3.333,
+   "from": "Sitting Clap.fbx"
+  },
+  "sitting-yell": {
+   "file": "people/clip-sitting-yell.glb",
+   "hips": 1.0427,
+   "seconds": 3.767,
+   "from": "Sitting Yell.fbx"
+  },
+  "standing-w-briefcase-idle": {
+   "file": "people/clip-standing-w-briefcase-idle.glb",
+   "hips": 0.9775,
+   "seconds": 14.333,
+   "from": "Standing W_Briefcase Idle (1).fbx"
+  }
+ },
+ "source": "Mixamo (Adobe), downloaded by the site owner",
+ "units": "metres"
+}

@@ -138,6 +138,16 @@
   @media (prefers-reduced-motion: reduce) {
     h1 .glyph > span { transition: none !important; transform: none !important; }
   }
+
+  /* A live portal anchored to the right-hand foundation brick. */
+  #service-portal{position:fixed;left:75%;top:61%;width:64px;height:64px;transform:translate(-50%,-50%);z-index:11;text-decoration:none;display:flex;align-items:flex-end;justify-content:center;outline-offset:5px}
+  #service-portal .portal-caption{position:absolute;top:calc(100% + 7px);white-space:nowrap;text-align:center;font:12px/1.65 monospace;letter-spacing:.09em;color:#b6f3ed;text-shadow:0 1px 7px #020205}
+  #service-portal small{font-size:10px;color:#97a7b2;display:block;letter-spacing:.19em}
+  #service-portal:hover .portal-caption{color:white}#service-portal:focus-visible{outline:2px solid #c5f6f2;border-radius:50%}
+  #portal-shade{position:fixed;inset:0;z-index:50;pointer-events:none;background:#030307;opacity:0}
+  body.portal-entering header,body.portal-entering footer,body.portal-entering h1,body.portal-entering #service-portal{opacity:0;transition:opacity .35s;pointer-events:none}
+  @media(max-width:600px){#service-portal{width:48px;height:48px}#service-portal .portal-caption{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -145,6 +155,8 @@
 <canvas id="scene" role="img"
   aria-label="Fullscreen voxel-art 3D animation of a construction worker building a small brick building at night in a neon cyberpunk city. Clicking the worker startles him briefly."></canvas>
 <div class="vignette" aria-hidden="true"></div>
+<a id="service-portal" href="world/" aria-label="Enter G-Maps Crab through the brick portal"><span class="portal-caption">CITY ATLAS ↗<small>ENTER THE BRICK</small></span></a>
+<div id="portal-shade" aria-hidden="true"></div>
 
 <header>
   <span class="mono">haoxiyuan.com</span>
@@ -1287,6 +1299,30 @@ function init3D() {
     }
   }
 
+
+  /* Persistent right foundation brick. Existing worker/build loop is unchanged. */
+  var portalAnchor = new THREE.Vector3(42, 4, 7.8);
+  var serviceBrick = new THREE.Mesh(new THREE.BoxGeometry(8,8,14),brickMat);
+  serviceBrick.position.set(42,4,0); serviceBrick.castShadow=true;scene.add(serviceBrick);
+  var portalUniforms={uTime:{value:0},uOpen:{value:0}};
+  var portalMaterial=new THREE.ShaderMaterial({uniforms:portalUniforms,
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:'varying vec2 vUv;uniform float uTime;uniform float uOpen;void main(){vec2 p=vUv*2.-1.;float r=length(p);float a=atan(p.y,p.x);float swirl=pow(max(0.,sin(a*3.+log(r+.04)*7.-uTime*2.)),9.)*.12;float rim=exp(-pow((r-.83)*18.,2.));float rings=pow(max(0.,sin(log(r+.02)*15.-uTime*1.8)),20.)*.15;vec3 c=vec3(.005,.009,.021)+vec3(.11,.72,.77)*(rim*.9+swirl*r+rings*r);gl_FragColor=vec4(c,1.);}'
+  });
+  var portalDisc=new THREE.Mesh(new THREE.CircleGeometry(2.95,64),portalMaterial);
+  portalDisc.position.copy(portalAnchor);scene.add(portalDisc);
+  var portalRim=new THREE.Mesh(new THREE.TorusGeometry(3.05,.12,8,48),new THREE.MeshStandardMaterial({color:0x536e7c,emissive:0x38aab5,emissiveIntensity:.65,metalness:.7,roughness:.28}));
+  portalRim.position.copy(portalAnchor);scene.add(portalRim);
+  var portalLight=new THREE.PointLight(0x75dfda,.9,23);portalLight.position.set(42,5,13);scene.add(portalLight);
+  var portalLink=document.getElementById('service-portal'),portalProjected=new THREE.Vector3();
+  var portalStart=0,portalFrom=new THREE.Vector3(),portalLookFrom=new THREE.Vector3(-8,16,0);
+  portalLink.addEventListener('click',function(e){
+    if(motionMq.matches)return;
+    e.preventDefault();if(portalStart)return;
+    portalStart=performance.now();portalFrom.copy(camera.position);document.body.classList.add('portal-entering');
+    setTimeout(function(){window.location.href=portalLink.href;},1350);
+  });
+
   var pointer = { x: 0, y: 0 };
   var ray = new THREE.Raycaster();
   var rayV = new THREE.Vector2();
@@ -1297,6 +1333,9 @@ function init3D() {
     return ray.intersectObject(hitBox, false).length > 0;
   }
   window.addEventListener("pointermove", function (e) {
+    // Keep the projected brick target stable while the pointer approaches it.
+    var portalBounds=portalLink.getBoundingClientRect();
+    if(e.clientX>portalBounds.left-48&&e.clientX<portalBounds.right+48&&e.clientY>portalBounds.top-48&&e.clientY<portalBounds.bottom+48){canvas.style.cursor="";return;}
     pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
     pointer.y = (e.clientY / window.innerHeight) * 2 - 1;
     canvas.style.cursor = workerHit(e.clientX, e.clientY) ? "pointer" : "";
@@ -1416,6 +1455,19 @@ function init3D() {
     camera.position.set(Math.sin(ang) * camRadius - 8, 30 - pointer.y * 6, Math.cos(ang) * camRadius);
     camera.lookAt(-8, 16, 0);
 
+
+    portalUniforms.uTime.value=clock;
+    if(portalStart){
+      var enter=Math.min(1,(performance.now()-portalStart)/1300),ease=enter*enter*enter;
+      camera.position.lerpVectors(portalFrom,new THREE.Vector3(42,4,8.8),ease);
+      camera.lookAt(new THREE.Vector3().lerpVectors(portalLookFrom,portalAnchor,Math.min(1,enter*1.8)));
+      camera.fov=36+enter*25;camera.updateProjectionMatrix();
+      document.getElementById('portal-shade').style.opacity=Math.max(0,(enter-.75)/.25);
+    }
+    portalProjected.copy(portalAnchor).project(camera);
+    portalLink.style.left=((portalProjected.x*.5+.5)*window.innerWidth)+'px';
+    portalLink.style.top=((-portalProjected.y*.5+.5)*window.innerHeight)+'px';
+
     /* billboard trees face the camera */
     trees.forEach(function (tr) {
       tr.rotation.y = Math.atan2(camera.position.x - tr.position.x,
@@ -1472,6 +1524,7 @@ function init3D() {
     if (document.hidden) stop(); else refresh();
   });
 
+  window.addEventListener('pageshow',function(e){if(e.persisted){portalStart=0;camera.fov=36;camera.updateProjectionMatrix();document.body.classList.remove('portal-entering');document.getElementById('portal-shade').style.opacity='0';refresh();}});
   refresh();
   return true;
 }
