@@ -179,7 +179,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
  width:100%;padding:clamp(13px,1.7vh,19px) clamp(13px,1.5vw,20px);border-top:0;border-bottom:1px solid #ffffff14;
  background:transparent;text-align:left;font-size:clamp(21px,2.1vw,30px);font-weight:800;letter-spacing:-.03em;
  transition:padding-left .45s cubic-bezier(.22,1,.36,1)}
-#city-picker nav>button::before{content:"";position:absolute;inset:6px -10px;border-radius:44px;opacity:0;
+#city-picker nav>button::before{content:"";position:absolute;inset:6px -10px;border-radius:12px;opacity:0;
  border:1px solid var(--edge);background:#ffffff08;background-image:var(--grid);background-size:7px 7px;
  box-shadow:inset 0 1px 0 #ffffff2b,0 18px 40px #00000059;
  transition:opacity .35s,transform .45s cubic-bezier(.22,1,.36,1);transform:scale(.985)}
@@ -223,7 +223,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 /* ---- the city selector -------------------------------------------------------- */
 #city-mechanism{height:auto;min-width:0;gap:0;padding:0;border:0;background:none;box-shadow:none;color:#e9f1f8}
 .paper-tail,.roller,.roller-shade,.roller-well:before,.roller-well:after,.mechanism-shell:after{display:none}
-.mechanism-shell{position:absolute;inset:0;z-index:-1;border-radius:21px;border:1px solid var(--edge);
+.mechanism-shell{position:absolute;inset:0;z-index:-1;border-radius:12px;border:1px solid var(--edge);
  background:var(--glass);background-image:var(--grid);background-size:7px 7px;
  box-shadow:0 24px 54px #00000070,inset 0 1px 0 #ffffff2e;backdrop-filter:blur(16px) saturate(120%)}
 #city-mechanism{display:flex;align-items:center;gap:clamp(8px,.8vw,12px);padding:6px 7px 6px 10px}
@@ -242,7 +242,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 #city-name{font-size:clamp(17px,1.2vw,21px);font-weight:900;letter-spacing:-.03em;line-height:1}
 #city-district{font-size:11px;font-weight:400;letter-spacing:.11em;text-transform:uppercase;color:#9db0be;white-space:nowrap;max-width:none}
 .city-led{width:4px;height:4px;border-radius:50%;background:#dfeefb;box-shadow:0 0 10px #a8d8ff;opacity:.85;margin-left:6px}
-.rocker{display:grid;grid-auto-flow:row;gap:0;width:34px;height:40px;border:1px solid var(--edge);border-radius:11px;
+.rocker{display:grid;grid-auto-flow:row;gap:0;width:34px;height:40px;border:1px solid var(--edge);border-radius:7px;
  background:#ffffff08;overflow:hidden}
 .rocker button{width:100%;height:100%;display:grid;place-items:center;background:none;transition:background .25s}
 .rocker button:first-child{border-bottom:1px solid #ffffff1f}
@@ -253,7 +253,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 .rocker button:hover .triangle{border-color:#fff}
 
 /* ---- the clock ---------------------------------------------------------------- */
-#time-mechanism{width:min(580px,calc(100vw - 28px));padding:8px 11px 7px 13px;border-radius:18px;
+#time-mechanism{width:min(580px,calc(100vw - 28px));padding:8px 11px 7px 13px;border-radius:12px;
  border:1px solid var(--edge);background:var(--glass);background-image:var(--grid);background-size:7px 7px;
  box-shadow:0 26px 60px #00000075,inset 0 1px 0 #ffffff30;backdrop-filter:blur(16px) saturate(120%);
  column-gap:clamp(14px,2vw,26px)}
@@ -261,7 +261,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 #time-clock{font-size:clamp(19px,1.5vw,24px);font-weight:900;letter-spacing:-.035em;line-height:1}
 #time-zone{font-size:9.5px;font-weight:500;letter-spacing:.16em;color:#96a9b7;margin-top:3px}
 #time-days{gap:0;margin-bottom:5px}
-#time-days button{flex:1;padding:3px 0;font-size:10px;font-weight:500;letter-spacing:.08em;border-radius:999px;
+#time-days button{flex:1;padding:3px 0;font-size:10px;font-weight:500;letter-spacing:.08em;border-radius:7px;
  color:#8095a5;background:none;transition:color .3s,background .3s}
 #time-days button:hover{color:#dfeaf3}
 #time-days button[aria-checked=true]{color:#f2f8fc;background:#ffffff14;box-shadow:inset 0 0 0 1px #ffffff2b}
@@ -281,14 +281,14 @@ body[data-phase=interior] #world:active{cursor:grabbing}
  background:#e9f3fb;transform:translateX(calc((1 - var(--lit,.5)) * -100%))}
 #time-moon[data-up=false]{opacity:.3}
 #time-status{font-size:11px;font-weight:400;letter-spacing:.01em;color:#9db0be;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#time-now{align-self:center;padding:6px 11px;border:1px solid var(--edge);border-radius:999px;font-size:10.5px;
+#time-now{align-self:center;padding:6px 11px;border:1px solid var(--edge);border-radius:8px;font-size:10.5px;
  font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#dbe7f0;background:#ffffff0a;
  transition:background .3s,color .3s,border-color .3s}
 #time-now:hover:not(:disabled){background:#ffffff1c;color:#fff;border-color:var(--edge-bright)}
 #time-now:disabled{opacity:.42}
-#time-slider::-webkit-slider-thumb{border-radius:7px;background:linear-gradient(#fdfefe,#c3cfdb);
+#time-slider::-webkit-slider-thumb{border-radius:4px;background:linear-gradient(#fdfefe,#c3cfdb);
  box-shadow:0 0 0 1px #ffffff5c,0 2px 10px #00000080,0 0 16px #8fc8ff4d}
-#time-slider::-moz-range-thumb{border-radius:7px;background:linear-gradient(#fdfefe,#c3cfdb);box-shadow:0 0 0 1px #ffffff5c}
+#time-slider::-moz-range-thumb{border-radius:4px;background:linear-gradient(#fdfefe,#c3cfdb);box-shadow:0 0 0 1px #ffffff5c}
 
 /* ---- the rest of the furniture, in the same key ------------------------------- */
 .icon-button{border:1px solid var(--edge);background:#05070bb0;color:#dbe7f0;backdrop-filter:blur(12px);
@@ -344,7 +344,7 @@ body[data-phase=picker] #picker-plate{animation:rise .9s .1s cubic-bezier(.22,1,
 #time-slider:active::-moz-range-thumb{box-shadow:0 0 0 1px #ffffff8a,0 0 26px #8fc8ff80}
 #city-picker nav>button:focus-visible::before,#location-control:focus-visible,#time-now:focus-visible,
 .rocker button:focus-visible,.icon-button:focus-visible,#back-to-street:focus-visible,#time-days button:focus-visible{
- outline:1px solid #cfe6fa;outline-offset:3px;border-radius:14px}
+ outline:1px solid #cfe6fa;outline-offset:3px;border-radius:8px}
 @media(prefers-reduced-motion:reduce){
  .chrome.restrike,.chrome.restrike::before,.chrome.restrike::after,
  body[data-phase=picker] #picker-title,body[data-phase=picker] #city-picker nav>button,
