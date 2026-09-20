@@ -15,7 +15,7 @@ const CITIES=[
  {id:'london',name:'London',district:'Berwick Street · Soho',model:'london-city-v16.glb',places:'london-places.json',poster:'london-poster-v14.jpg'}
 ];
 let cityIndex=Math.max(0,CITIES.findIndex(c=>c.id===new URLSearchParams(location.search).get('city')));
-const CURVE_START=29, BEND_RADIUS=42, STRIP_STEP=30;let TRAVEL_MAX=124;
+const CURVE_START=29, BEND_RADIUS=42, STRIP_STEP=26;let TRAVEL_MAX=124;
 const uniform={fold:{value:.22},start:{value:CURVE_START}};
 Object.assign(state,{endingTime:0,finished:false,foldTarget:.22,startTarget:CURVE_START});
 let journeyExit,stripPosition=cityIndex+9,stripTarget=cityIndex+9,stripVelocity=0;
