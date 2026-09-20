@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08040f">
 <title>Singapore — Haoxi Yuan</title><meta name="description" content="Walk through folded streets in Singapore, Tokyo and London, and explore real places and reviews.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚧</text></svg>">
-<link rel="stylesheet" href="world.css?v=17"><script type="importmap">{"imports":{"three":"../assets/vendor/three.module.js"}}</script>
+<link rel="stylesheet" href="world.css?v=21"><script type="importmap">{"imports":{"three":"../assets/vendor/three.module.js"}}</script>
 </head><body data-phase="loading">
 <img id="fallback" src="../assets/folded-city/singapore-poster-v14.jpg" alt="Singapore shophouse visual study">
 <canvas id="world" tabindex="0" aria-label="Walk through Singapore. Scroll to move forward or backward; drag to look around." aria-describedby="walk-instructions"></canvas>
@@ -14,14 +14,14 @@
 <div class="paper-tail" aria-hidden="true"><div id="tail-strip"></div></div><div class="mechanism-shell" aria-hidden="true"></div>
 <div class="roller-well" aria-hidden="true"><i class="roller left"></i><div class="strip-window"><div id="number-strip"><span>1</span><span>2</span><span>3</span></div></div><i class="roller right"></i><i class="roller-shade"></i></div>
 <div class="rocker"><button id="city-previous" aria-label="Previous city"><span class="triangle up"></span></button><button id="city-next" aria-label="Next city"><span class="triangle down"></span></button></div>
-<button id="location-control" aria-label="Singapore, Chinatown. Choose a city" aria-haspopup="dialog"><span id="city-name">Singapore</span><span id="city-district">Chinatown</span><span class="city-led" aria-hidden="true"></span></button>
+<button id="location-control" aria-label="Singapore, Chinatown. Choose a city" aria-haspopup="dialog"><span id="city-name" class="chrome" data-text="Singapore">Singapore</span><span id="city-district">Chinatown</span><span class="city-led" aria-hidden="true"></span></button>
 <span id="city-status" class="sr-only" role="status"></span>
 </div>
 <div id="time-mechanism" hidden role="group" aria-label="Time of day">
-<div class="time-face"><span id="time-clock">--:--</span><span id="time-zone"></span></div>
+<div class="time-face"><span id="time-clock" class="chrome" data-text="--:--">--:--</span><span id="time-zone"></span></div>
 <div id="time-days" role="radiogroup" aria-label="Day of the week"></div>
-<div class="time-track"><input id="time-slider" type="range" min="0" max="1439" step="5" value="720" aria-label="Time of day" aria-describedby="time-status"><div class="time-scale" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
-<p id="time-status" role="status"></p>
+<div class="time-track"><input id="time-slider" type="range" min="0" max="1439" step="5" value="720" aria-label="Time of day" aria-describedby="time-status"><div class="time-scale" aria-hidden="true"><i data-hour="00"></i><i data-hour="06"></i><i data-hour="12"></i><i data-hour="18"></i><i data-hour="24"></i></div></div>
+<div class="time-note"><i id="time-moon" aria-hidden="true"></i><p id="time-status" role="status"></p></div>
 <button id="time-now" class="quiet" aria-label="Return to the current local time">Now</button>
 </div>
 <div class="top-actions"><button id="pause" class="icon-button" aria-label="Pause journey" aria-pressed="false" hidden>Ⅱ</button><button id="skip" class="icon-button" aria-label="Skip tunnel" title="Skip tunnel">↗</button><a class="icon-button" href="../" aria-label="Return home" title="Return home">×</a></div>
@@ -30,11 +30,13 @@
 <div id="shop-labels" aria-label="Places in Chinatown"></div>
 <div id="door-hotspots" aria-label="Doors you can step through"></div>
 <section id="city-picker" hidden role="dialog" aria-modal="true" aria-labelledby="picker-title">
-<button id="back-to-street" class="quiet">← Back to the street</button><h1 id="picker-title">Streets to explore</h1>
+<canvas id="picker-dust" aria-hidden="true"></canvas>
+<figure id="picker-plate" aria-hidden="true"><img id="picker-plate-image" src="" alt=""><figcaption><span id="picker-plate-street"></span><span id="picker-plate-city"></span></figcaption></figure>
+<button id="back-to-street" class="quiet">← Back to the street</button><h1 id="picker-title" class="chrome" data-text="Streets to explore">Streets to explore</h1>
 <nav aria-label="Choose a city">
-<button data-city="singapore"><span class="destination-number">01</span><span>Singapore<small>Temple Street · Chinatown</small></span><span aria-hidden="true">↗</span></button>
-<button data-city="tokyo"><span class="destination-number">02</span><span>Tokyo<small>Denboin-dori · Asakusa</small></span><span aria-hidden="true">↗</span></button>
-<button data-city="london"><span class="destination-number">03</span><span>London<small>Berwick Street · Soho</small></span><span aria-hidden="true">↗</span></button>
+<button data-city="singapore"><span class="destination-number">01</span><span class="chrome" data-text="Singapore">Singapore<small>Temple Street · Chinatown</small></span><span aria-hidden="true">↗</span></button>
+<button data-city="tokyo"><span class="destination-number">02</span><span class="chrome" data-text="Tokyo">Tokyo<small>Denboin-dori · Asakusa</small></span><span aria-hidden="true">↗</span></button>
+<button data-city="london"><span class="destination-number">03</span><span class="chrome" data-text="London">London<small>Berwick Street · Soho</small></span><span aria-hidden="true">↗</span></button>
 </nav>
 <details id="scene-sources"><summary>Sources</summary><p>Street layouts and building footprints: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors · ODbL</a>. Facades, roof details and unrecorded building heights are architectural interpretations. Place cards contain real Google Maps records at their mapped buildings, with dated review excerpts and links to the original places. Singapore records are from the saved August 2026 collection; Tokyo and London were checked in September 2026.</p>
 <p>Architecture and street objects: Haoxi Yuan’s visual study, authored in Blender with generated surface textures.</p>
@@ -63,4 +65,4 @@
 </div>
 <p id="interior-status" role="status" class="sr-only"></p>
 </main><noscript><style>#threshold{display:none}#fallback{opacity:1}#city-picker{display:block!important}</style></noscript>
-<script type="module" src="world.js?v=20"></script></body></html>
+<script type="module" src="world.js?v=21"></script></body></html>

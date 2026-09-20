@@ -116,3 +116,242 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 #dish-quotes .review{padding:14px 0}
 #dish-quotes .review p{font-size:14px;line-height:1.55;margin:8px 0 0}
 @media(max-width:700px){#dish-panel{right:12px;left:12px;width:auto;top:auto;bottom:12px;transform:none;max-height:52vh}body[data-reading=true] #dish-panel{bottom:72px;max-height:46vh}body[data-reading=true] #interior-hud,body[data-dish=true] #interior-hud{display:none}}
+
+/* ===== V17: the chrome-and-glass face =========================================
+   Redrawn from Haoxi's reference plates: black ground, filament dust, engraved
+   silver display type on a heavy grotesque, and controls as smoked-glass
+   capsules with a hairline edge and a printed dot grid. Every state change is a
+   move of light across those surfaces rather than a change of colour. */
+@font-face{font-family:'Inter v';src:url('../assets/fonts/inter-latin.woff2') format('woff2');font-weight:100 900;font-display:swap;font-style:normal}
+:root{
+ --glass:#05070bc4;--edge:#ffffff2e;--edge-bright:#ffffff6b;
+ --grid:radial-gradient(circle at center,#ffffff1c .5px,transparent .6px);
+ --silver:linear-gradient(177deg,#fff 0%,#eef4fb 24%,#93a3b6 45%,#fff 52%,#93a3b6 58%,#e9f1fa 82%,#b9c5d3 100%);
+ --hair:linear-gradient(90deg,transparent,#ffffff55 18%,#ffffff7a 50%,#ffffff55 82%,transparent);
+ --ui:'Inter v','Helvetica Neue',Helvetica,Arial,sans-serif;
+}
+#city-picker,#city-mechanism,#time-mechanism,#interior-hud,.place-card,#place-dialog,#dish-panel{font-family:var(--ui)}
+
+/* Engraved silver type: fine rulings over a rolled-metal gradient, with two
+   faint colour ghosts either side of the stroke, as on the plates. */
+.chrome{position:relative;color:transparent;background-image:
+   repeating-linear-gradient(97deg,#ffffff00 0 1.5px,#5e6d7e5c 1.5px 2px,#ffffff00 2px 3.5px),
+   var(--silver);
+ background-size:220% 100%,100% 100%;background-position:0 0,0 0;
+ -webkit-background-clip:text;background-clip:text;
+ text-shadow:0 0 9px #9cc8ea26;transition:background-position .8s cubic-bezier(.22,1,.36,1)}
+.chrome::before,.chrome::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;
+ background:none;-webkit-background-clip:border-box;background-clip:border-box;
+ mix-blend-mode:screen;pointer-events:none;opacity:.42;transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.chrome::before{color:#39d7ff;transform:translate(-1.1px,.4px)}
+.chrome::after{color:#ff57c8;transform:translate(1.1px,-.4px)}
+:is(button,a):hover>.chrome,.chrome:hover{background-position:100% 0,0 0}
+:is(button,a):hover>.chrome::before{transform:translate(-2.2px,.8px)}
+:is(button,a):hover>.chrome::after{transform:translate(2.2px,-.8px)}
+
+/* A capsule of smoked glass: hairline edge, printed dot grid, a sheen along the
+   top and a soft shoulder at the foot, like the reference controls. */
+.plate{position:relative;background:var(--glass);border:1px solid var(--edge);
+ box-shadow:0 26px 60px #00000075,inset 0 1px 0 #ffffff33,inset 0 -18px 40px #ffffff08;
+ backdrop-filter:blur(16px) saturate(120%)}
+.plate::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background-image:var(--grid);background-size:7px 7px;opacity:.5;
+ mask-image:linear-gradient(#000,#0000 62%)}
+.plate::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background:linear-gradient(177deg,#ffffff1a,transparent 22%,transparent 78%,#ffffff0f)}
+
+/* ---- the list of streets ---------------------------------------------------- */
+#city-picker{background:radial-gradient(120% 90% at 76% 18%,#0a1118 0%,#03050a 58%,#000 100%);
+ backdrop-filter:blur(26px);padding:clamp(72px,10vh,120px) clamp(26px,7vw,110px) 56px;
+ display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);
+ grid-template-areas:"back back" "title plate" "list plate" "sources plate";
+ gap:0 clamp(24px,5vw,78px);align-content:start}
+#picker-dust{position:absolute;inset:0;z-index:0;pointer-events:none}
+#city-picker>*{position:relative;z-index:1}
+#back-to-street{grid-area:back}#picker-title{grid-area:title}#city-picker nav{grid-area:list}
+#picker-plate{grid-area:plate}#scene-sources{grid-area:sources}
+#back-to-street{grid-column:1/-1;justify-self:start;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:#93a6b4;transition:color .25s,transform .25s}
+#back-to-street:hover{color:#f2f7fb;transform:translateX(-4px)}
+#picker-title{font-size:clamp(40px,7.2vw,92px);font-weight:900;letter-spacing:-.045em;line-height:.94;
+ text-transform:uppercase;margin:clamp(22px,4vh,46px) 0 clamp(20px,3.4vh,40px)}
+#city-picker nav{max-width:none;border-top:1px solid #ffffff14}
+#city-picker nav>button{position:relative;display:flex;align-items:center;gap:clamp(16px,2.4vw,34px);
+ width:100%;padding:clamp(16px,2.4vh,26px) clamp(14px,1.8vw,26px);border-top:0;border-bottom:1px solid #ffffff14;
+ background:transparent;text-align:left;font-size:clamp(26px,3.6vw,50px);font-weight:800;letter-spacing:-.035em;
+ transition:padding-left .45s cubic-bezier(.22,1,.36,1)}
+#city-picker nav>button::before{content:"";position:absolute;inset:6px -10px;border-radius:44px;opacity:0;
+ border:1px solid var(--edge);background:#ffffff08;background-image:var(--grid);background-size:7px 7px;
+ box-shadow:inset 0 1px 0 #ffffff2b,0 18px 40px #00000059;
+ transition:opacity .35s,transform .45s cubic-bezier(.22,1,.36,1);transform:scale(.985)}
+#city-picker nav>button:hover::before,#city-picker nav>button:focus-visible::before,
+#city-picker nav>button[aria-pressed=true]::before{opacity:1;transform:none}
+#city-picker nav>button:hover,#city-picker nav>button:focus-visible{padding-left:clamp(22px,2.8vw,40px)}
+#city-picker nav>button:focus-visible{outline:none}
+#city-picker nav>button>span:first-child{position:relative;font-family:var(--ui);font-style:normal;
+ font-size:clamp(12px,1.05vw,15px);font-weight:500;letter-spacing:.16em;color:#7e8ea0;transition:color .3s}
+#city-picker nav>button[aria-pressed=true]>span:first-child::before{content:"";position:absolute;left:-16px;top:50%;
+ width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:#eaf4ff;box-shadow:0 0 12px #9fd4ff}
+#city-picker nav>button:hover>span:first-child{color:#cfe0ee}
+#city-picker nav small{display:block;margin-top:9px;font-size:clamp(11px,.95vw,14px);font-weight:400;
+ letter-spacing:.14em;color:#8fa1b0;text-transform:none}
+#city-picker nav>button>span:last-child{margin-left:auto;font-size:clamp(18px,1.7vw,26px);font-weight:300;color:#90a4b4;
+ transition:transform .45s cubic-bezier(.22,1,.36,1),color .3s}
+#city-picker nav>button:hover>span:last-child{transform:translate(6px,-6px);color:#f0f7fd}
+/* the street's own poster, dissolved into the same dust */
+#picker-plate{align-self:start;margin:0;position:relative;min-height:min(62vh,560px);
+ display:flex;flex-direction:column;justify-content:flex-end;gap:14px}
+#picker-plate img{transition:opacity .45s;width:100%;height:min(58vh,520px);object-fit:cover;filter:grayscale(1) contrast(1.35) brightness(1.06);
+ mix-blend-mode:screen;opacity:.72;
+ mask-image:radial-gradient(78% 72% at 50% 44%,#000 38%,#0009 62%,transparent 88%)}
+#picker-plate::after{content:"";position:absolute;left:0;right:0;top:0;height:min(58vh,520px);pointer-events:none;
+ background-image:radial-gradient(circle at center,#000 .8px,transparent .9px);background-size:3px 3px;
+ mix-blend-mode:multiply;opacity:.85;
+ mask-image:radial-gradient(78% 72% at 50% 44%,#000 38%,#0009 62%,transparent 88%)}
+#city-picker::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+ background-image:repeating-linear-gradient(90deg,#ffffff12 0 1px,transparent 1px 2px);
+ background-size:100% 6px;background-repeat:repeat-y;
+ background-position:clamp(26px,7vw,110px) 0;opacity:.5;
+ mask-image:linear-gradient(90deg,#000 0 1px,transparent 1px)}
+#picker-plate img[data-swapping]{opacity:.12}
+#picker-plate figcaption{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.3em;
+ text-transform:uppercase;color:#93a6b4}
+#picker-plate figcaption::after{content:"";width:38px;height:1px;margin-top:9px;background:#ffffff4d}
+#scene-sources{grid-column:1;max-width:680px;margin-top:38px;color:#8fa0ad;font-size:12.5px;letter-spacing:.01em}
+#scene-sources summary{letter-spacing:.24em;text-transform:uppercase;font-size:11px;color:#a9bac6}
+@media(max-width:900px){#city-picker{grid-template-columns:1fr}#picker-plate{display:none}}
+
+/* ---- the city selector -------------------------------------------------------- */
+#city-mechanism{height:auto;min-width:0;gap:0;padding:0;border:0;background:none;box-shadow:none;color:#e9f1f8}
+.paper-tail,.roller,.roller-shade,.roller-well:before,.roller-well:after,.mechanism-shell:after{display:none}
+.mechanism-shell{position:absolute;inset:0;z-index:-1;border-radius:34px;border:1px solid var(--edge);
+ background:var(--glass);background-image:var(--grid);background-size:7px 7px;
+ box-shadow:0 24px 54px #00000070,inset 0 1px 0 #ffffff2e;backdrop-filter:blur(16px) saturate(120%)}
+/* the shoulder under the capsule, as on the plates */
+.mechanism-shell::before{content:"";position:absolute;left:34%;right:34%;top:100%;height:13px;
+ border:1px solid var(--edge);border-top:0;border-radius:0 0 18px 18px;background:var(--glass);backdrop-filter:blur(16px)}
+#city-mechanism{display:flex;align-items:center;gap:clamp(12px,1.3vw,20px);padding:14px 14px 14px 18px}
+.roller-well{width:46px;height:92px;border-radius:0;background:none;box-shadow:none;border-right:1px solid #ffffff1f;perspective:none}
+.strip-window{position:absolute;inset:0;right:12px;background:none;box-shadow:none;
+ mask-image:linear-gradient(transparent,#000 24% 76%,transparent)}
+#number-strip{background:none}
+#number-strip span::before{display:none}
+/* the rocker sits at the far end of the capsule, as on the plate */
+#city-mechanism .roller-well{order:1}#location-control{order:2}.rocker{order:3;margin-left:auto}
+#number-strip span{display:grid;place-items:center;height:30px;font-size:13px;font-weight:500;letter-spacing:.08em;
+ color:#7d8d9d;transform:none!important;transition:color .3s}
+#number-strip span[data-near]{color:#eef5fb;text-shadow:0 0 12px #8fc8ff3d}
+#city-mechanism{width:max-content}
+#location-control{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;max-width:none;flex:0 0 auto;padding:0 clamp(12px,1.6vw,26px) 0 14px;background:none;color:inherit}
+#city-name{font-size:clamp(26px,2.2vw,38px);font-weight:900;letter-spacing:-.04em;line-height:1}
+#city-district{font-size:11px;font-weight:400;letter-spacing:.2em;text-transform:uppercase;color:#93a6b4;white-space:nowrap;max-width:none}
+.city-led{width:5px;height:5px;border-radius:50%;background:#dfeefb;box-shadow:0 0 10px #a8d8ff;opacity:.85;margin-left:6px}
+.rocker{display:grid;grid-auto-flow:row;gap:0;width:54px;height:66px;border:1px solid var(--edge);border-radius:16px;
+ background:#ffffff08;overflow:hidden}
+.rocker button{width:100%;height:100%;display:grid;place-items:center;background:none;transition:background .25s}
+.rocker button:first-child{border-bottom:1px solid #ffffff1f}
+.rocker button:hover{background:#ffffff14}
+.rocker .triangle{width:11px;height:11px;border:0;border-top:1.4px solid #cfe0ee;border-right:1.4px solid #cfe0ee;
+ transform:rotate(-45deg);margin-top:3px;transition:transform .3s,border-color .3s}
+.rocker .triangle.down{transform:rotate(135deg);margin-top:-3px}
+.rocker button:hover .triangle{border-color:#fff}
+
+/* ---- the clock ---------------------------------------------------------------- */
+#time-mechanism{width:min(760px,calc(100vw - 28px));padding:16px 18px 14px 22px;border-radius:28px;
+ border:1px solid var(--edge);background:var(--glass);background-image:var(--grid);background-size:7px 7px;
+ box-shadow:0 26px 60px #00000075,inset 0 1px 0 #ffffff30;backdrop-filter:blur(16px) saturate(120%);
+ column-gap:clamp(14px,2vw,26px)}
+#time-mechanism::after{content:"";position:absolute;left:38%;right:38%;top:100%;height:13px;
+ border:1px solid var(--edge);border-top:0;border-radius:0 0 18px 18px;background:var(--glass)}
+.time-face{min-width:96px;padding-right:clamp(12px,1.6vw,22px);border-right:1px solid #ffffff1a}
+#time-clock{font-size:clamp(30px,3vw,44px);font-weight:900;letter-spacing:-.05em;line-height:1}
+#time-zone{font-size:10px;font-weight:500;letter-spacing:.28em;color:#8ea2b0;margin-top:5px}
+#time-days{gap:0;margin-bottom:10px}
+#time-days button{flex:1;padding:5px 0;font-size:10px;font-weight:500;letter-spacing:.18em;border-radius:999px;
+ color:#8095a5;background:none;transition:color .3s,background .3s}
+#time-days button:hover{color:#dfeaf3}
+#time-days button[aria-checked=true]{color:#f2f8fc;background:#ffffff14;box-shadow:inset 0 0 0 1px #ffffff2b}
+#time-days button[aria-checked=true]::before{content:"";display:inline-block;width:4px;height:4px;border-radius:50%;
+ background:#eaf4ff;box-shadow:0 0 8px #a8d8ff;margin-right:7px;vertical-align:middle}
+.time-track{height:30px;margin-top:36px}
+/* a ruler: minor strokes across the whole run, five that are labelled */
+.time-track::before{content:"";position:absolute;left:5px;right:5px;top:-3px;height:7px;pointer-events:none;
+ background:repeating-linear-gradient(90deg,#ffffff2b 0 1px,transparent 1px 12px)}
+.time-scale i{position:relative;width:1px;height:8px;background:#ffffff5c}
+.time-scale i::after{content:attr(data-hour);position:absolute;top:10px;left:50%;transform:translateX(-50%);
+ font-size:9.5px;font-weight:500;letter-spacing:.16em;color:#7f93a3}
+.time-note{grid-area:status;display:flex;align-items:center;gap:9px;margin-top:16px}
+#time-moon{position:relative;flex:none;width:13px;height:13px;border-radius:50%;
+ background:#0a0f14;box-shadow:inset 0 0 0 1px #ffffff40;overflow:hidden;opacity:.75}
+#time-moon::after{content:"";position:absolute;inset:0;border-radius:50%;
+ background:#e9f3fb;transform:translateX(calc((1 - var(--lit,.5)) * -100%))}
+#time-moon[data-up=false]{opacity:.3}
+#time-status{font-size:11.5px;font-weight:400;letter-spacing:.09em;color:#93a6b4}
+#time-now{align-self:center;padding:9px 18px;border:1px solid var(--edge);border-radius:999px;font-size:11px;
+ font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#dbe7f0;background:#ffffff0a;
+ transition:background .3s,color .3s,border-color .3s}
+#time-now:hover:not(:disabled){background:#ffffff1c;color:#fff;border-color:var(--edge-bright)}
+#time-now:disabled{opacity:.42}
+#time-slider::-webkit-slider-thumb{border-radius:7px;background:linear-gradient(#fdfefe,#c3cfdb);
+ box-shadow:0 0 0 1px #ffffff5c,0 2px 10px #00000080,0 0 16px #8fc8ff4d}
+#time-slider::-moz-range-thumb{border-radius:7px;background:linear-gradient(#fdfefe,#c3cfdb);box-shadow:0 0 0 1px #ffffff5c}
+
+/* ---- the rest of the furniture, in the same key ------------------------------- */
+.icon-button{border:1px solid var(--edge);background:#05070bb0;color:#dbe7f0;backdrop-filter:blur(12px);
+ transition:background .25s,border-color .25s,color .25s}
+.icon-button:hover{background:#ffffff1a;border-color:var(--edge-bright);color:#fff}
+#interior-hud{border:1px solid var(--edge);background:var(--glass);background-image:var(--grid);background-size:7px 7px;
+ backdrop-filter:blur(16px) saturate(120%)}
+#interior-name{font-weight:800;letter-spacing:-.02em}
+#interior-zone{letter-spacing:.24em}
+@media(prefers-reduced-motion:reduce){
+ .chrome,.chrome::before,.chrome::after,#city-picker nav>button,#city-picker nav>button::before,
+ #city-picker nav>button>span:last-child{transition:none}
+}
+@media(max-width:700px){
+ #city-mechanism{padding:10px 10px 10px 14px;gap:9px}
+ .roller-well{width:36px;height:72px}#number-strip span{height:30px;font-size:11px}
+ #city-name{font-size:21px}#city-district{font-size:9.5px;letter-spacing:.16em}
+ .rocker{width:42px;height:54px}
+ #time-mechanism{padding:12px 12px 11px 15px;border-radius:22px}
+ .time-face{min-width:72px}#time-clock{font-size:25px}
+ .time-scale i::after{font-size:8px}
+ #time-now{padding:7px 12px;font-size:10px;letter-spacing:.12em}
+}
+
+/* ---- how the surfaces answer ---------------------------------------------- */
+/* A city change re-strikes its name: the highlight runs across the letters once
+   and the colour ghosts spread and settle, the way a plate is stamped. */
+@keyframes restrike{
+ 0%{background-position:-60% 0,0 0}
+ 100%{background-position:150% 0,0 0}
+}
+@keyframes restrike-ghost{
+ 0%{opacity:.85;transform:translate(-5px,1.4px)}
+ 100%{opacity:.42;transform:translate(-1.1px,.4px)}
+}
+@keyframes restrike-ghost-b{
+ 0%{opacity:.85;transform:translate(5px,-1.4px)}
+ 100%{opacity:.42;transform:translate(1.1px,-.4px)}
+}
+.chrome.restrike{animation:restrike .85s cubic-bezier(.3,.9,.3,1)}
+.chrome.restrike::before{animation:restrike-ghost .85s cubic-bezier(.3,.9,.3,1)}
+.chrome.restrike::after{animation:restrike-ghost-b .85s cubic-bezier(.3,.9,.3,1)}
+/* The list arrives in order, one line after another. */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+body[data-phase=picker] #picker-title{animation:rise .7s cubic-bezier(.22,1,.36,1) both}
+body[data-phase=picker] #city-picker nav>button{animation:rise .7s cubic-bezier(.22,1,.36,1) both}
+body[data-phase=picker] #city-picker nav>button:nth-child(1){animation-delay:.06s}
+body[data-phase=picker] #city-picker nav>button:nth-child(2){animation-delay:.13s}
+body[data-phase=picker] #city-picker nav>button:nth-child(3){animation-delay:.2s}
+body[data-phase=picker] #picker-plate{animation:rise .9s .1s cubic-bezier(.22,1,.36,1) both}
+/* Handling the clock lights its thumb; every control shows the keyboard where it is. */
+#time-slider:active::-webkit-slider-thumb{box-shadow:0 0 0 1px #ffffff8a,0 2px 12px #000000a6,0 0 26px #8fc8ff80}
+#time-slider:active::-moz-range-thumb{box-shadow:0 0 0 1px #ffffff8a,0 0 26px #8fc8ff80}
+#city-picker nav>button:focus-visible::before,#location-control:focus-visible,#time-now:focus-visible,
+.rocker button:focus-visible,.icon-button:focus-visible,#back-to-street:focus-visible,#time-days button:focus-visible{
+ outline:1px solid #cfe6fa;outline-offset:3px;border-radius:14px}
+@media(prefers-reduced-motion:reduce){
+ .chrome.restrike,.chrome.restrike::before,.chrome.restrike::after,
+ body[data-phase=picker] #picker-title,body[data-phase=picker] #city-picker nav>button,
+ body[data-phase=picker] #picker-plate{animation:none}
+}

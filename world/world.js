@@ -15,18 +15,20 @@ const CITIES=[
  {id:'london',name:'London',district:'Berwick Street · Soho',model:'london-city-v16.glb',places:'london-places.json',poster:'london-poster-v14.jpg'}
 ];
 let cityIndex=Math.max(0,CITIES.findIndex(c=>c.id===new URLSearchParams(location.search).get('city')));
-const CURVE_START=29, BEND_RADIUS=42;let TRAVEL_MAX=124;
+const CURVE_START=29, BEND_RADIUS=42, STRIP_STEP=30;let TRAVEL_MAX=124;
 const uniform={fold:{value:.22},start:{value:CURVE_START}};
 Object.assign(state,{endingTime:0,finished:false,foldTarget:.22,startTarget:CURVE_START});
 let journeyExit,stripPosition=cityIndex+9,stripTarget=cityIndex+9,stripVelocity=0;
 let streetLayout=null;
 for(const id of ['number-strip','tail-strip']){
  const fragment=document.createDocumentFragment();
- for(let i=0;i<24;i++){const cell=document.createElement('span');cell.textContent=String(i%3+1);fragment.append(cell);}
+ for(let i=0;i<24;i++){const cell=document.createElement('span');cell.textContent='0'+(i%3+1);fragment.append(cell);}
  $(id).replaceChildren(fragment);
 }
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+/** Engraved type carries its own text in data-text, for the two colour-fringe layers. */
+const engrave=(el,text)=>{el.textContent=text;el.dataset.text=text;};
 const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
 let renderer,city,tunnel,camera,tunnelCamera,exitLight,headLight,lampPool=[],lampSpots=[],labels=[],raf=0,last=0,renderCount=0;
 let daylight=null,places=[],shopParts=new Map(),nightGlow=[],facadeParts=[],sunlit={},lastShopKey='';
@@ -80,7 +82,9 @@ function foldPoint(p,anchor=null){
 }
 function announceCity(){
  const c=CITIES[cityIndex];const url=new URL(location.href);url.searchParams.set('city',c.id);history.replaceState(null,'',url);document.title=c.name+' — Haoxi Yuan';
- $('city-name').textContent=c.name;$('city-district').textContent=c.district;
+ engrave($('city-name'),c.name);$('city-district').textContent=c.district;
+ // Re-strike the name so a change of city reads as the plate being stamped again.
+ const plate=$('city-name');plate.classList.remove('restrike');void plate.offsetWidth;plate.classList.add('restrike');
  $('location-control').setAttribute('aria-label',c.name+', '+c.district+'. Choose a city');
  $('world').setAttribute('aria-label','Walk through '+c.name+'. Scroll to move forward or backward; drag to look around.');
  $('shop-labels').setAttribute('aria-label','Places in '+c.district);
@@ -96,14 +100,18 @@ function animateMechanism(dt){
   if(stripTarget>17){stripTarget-=9;stripPosition-=9;}
   if(stripTarget<5){stripTarget+=9;stripPosition+=9;}
  }
- for(const id of ['number-strip','tail-strip'])$(id).style.transform=`translate3d(0,${-stripPosition*54}px,0)`;
+ for(const id of ['number-strip','tail-strip'])$(id).style.transform=`translate3d(0,${-stripPosition*STRIP_STEP}px,0)`;
  // The paper runs over the spindle; cylinder highlights travel with the belt.
- $('city-mechanism').style.setProperty('--roller-travel',`${stripPosition*54}px`);
+ $('city-mechanism').style.setProperty('--roller-travel',`${stripPosition*STRIP_STEP}px`);
  $('city-mechanism').style.setProperty('--belt-speed',String(Math.min(1,Math.abs(stripVelocity)/6)));
  $('city-mechanism').dataset.stripPosition=stripPosition.toFixed(3);
  $('city-mechanism').dataset.stripTarget=stripTarget.toFixed(3);
  for(const [i,cell] of [...$('number-strip').children].entries()){
-  const d=i-stripPosition;cell.style.transform=`perspective(160px) rotateX(${clamp(d*43,-65,65)}deg)`;
+  // The reading at the centre of the window is the city you are in; the two either side
+  // are where the rocker would take you, and they sit back.
+  const d=Math.abs(i-stripPosition);
+  cell.style.opacity=String(clamp(1-d*.42,.18,1));
+  if(d<.5)cell.dataset.near='';else delete cell.dataset.near;
  }
 }
 function disposeScene(scene){
@@ -142,10 +150,72 @@ function showCity(){
   schedule();
 }
 
+// A slow field of dust and drifting filaments behind the city list, drawn only while the
+// list is open and never under reduced motion.
+let dustRaf=0,dustPoints=null;
+function dust(open){
+ const canvas=$('picker-dust');
+ cancelAnimationFrame(dustRaf);dustRaf=0;
+ if(!open||reduced.matches){canvas.hidden=true;return;}
+ canvas.hidden=false;
+ const context=canvas.getContext('2d');
+ const fit=()=>{const r=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*r;canvas.height=innerHeight*r;context.setTransform(r,0,0,r,0,0);};
+ fit();
+ if(!dustPoints){
+  dustPoints=[];
+  for(let i=0;i<420;i++)dustPoints.push({x:Math.random(),y:Math.random(),z:.25+Math.random()*.75,drift:(Math.random()-.5)*.012});
+ }
+ let last=performance.now();
+ const frame=now=>{
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(canvas.width!==innerWidth*Math.min(devicePixelRatio||1,2))fit();
+  context.clearRect(0,0,innerWidth,innerHeight);
+  // filaments: long, slow catenary threads, like the reference's wire loops
+  context.lineWidth=.6;
+  for(let k=0;k<5;k++){
+   const phase=now/9000+k*1.7,sag=.12+.05*Math.sin(phase*.7);
+   context.beginPath();
+   for(let i=0;i<=40;i++){
+    const t=i/40,x=innerWidth*(.32+.72*t+.04*Math.sin(phase+t*4)),
+     y=innerHeight*(.18+k*.14+sag*Math.sin(Math.PI*t)+.02*Math.sin(phase*1.3+t*7));
+    i?context.lineTo(x,y):context.moveTo(x,y);
+   }
+   context.strokeStyle='rgba(197,221,241,'+(.05+.03*Math.sin(phase)).toFixed(3)+')';
+   context.stroke();
+  }
+  for(const point of dustPoints){
+   point.x+=point.drift*dt;point.y-=point.z*.004*dt;
+   if(point.y<-.02)point.y=1.02;if(point.x<-.02)point.x=1.02;if(point.x>1.02)point.x=-.02;
+   const x=point.x*innerWidth,y=point.y*innerHeight,r=point.z*1.5;
+   context.fillStyle='rgba(226,240,252,'+(point.z*.5).toFixed(3)+')';
+   context.fillRect(x,y,r,r);
+  }
+  dustRaf=requestAnimationFrame(frame);
+ };
+ dustRaf=requestAnimationFrame(frame);
+}
+
+function pickerPlate(id){
+ const c=CITIES.find(city=>city.id===id)||CITIES[cityIndex];
+ const image=$('picker-plate-image'),source='../assets/folded-city/'+c.poster;
+ if(!image.src.endsWith(c.poster)){image.dataset.swapping='true';image.src=source;
+  image.onload=()=>{delete image.dataset.swapping;};}
+ $('picker-plate-street').textContent=c.district.split(' · ')[0];
+ $('picker-plate-city').textContent=c.name;
+}
+// Running the list changes the plate beside it, so the eye sees the street it is choosing.
+for(const button of document.querySelectorAll('#city-picker nav>button')){
+ button.addEventListener('pointerenter',()=>pickerPlate(button.dataset.city));
+ button.addEventListener('focus',()=>pickerPlate(button.dataset.city));
+}
+$('city-picker').addEventListener('pointerleave',()=>pickerPlate());
+document.querySelector('#city-picker nav')?.addEventListener('pointerleave',()=>pickerPlate());
+
 function picker(open){
   if(open)state.returnFocus=document.activeElement;
   $('city-picker').hidden=!open;
   for(const id of ['city-mechanism','shop-labels'])$(id).inert=open;
+  dust(open);if(open)pickerPlate();
   if(open){state.targetDistance=state.distance;phase('picker');$('back-to-street').textContent=state.finished?'↺ Walk again':'← Back to the street';$('back-to-street').focus();}
   else{if(state.finished)showCity();else phase(state.loaded?'city':'fallback');state.returnFocus?.focus();}
   schedule();
@@ -230,9 +300,13 @@ function renderHours(place){
  host.append(week);
  const busy=popularityAt(place,clock.weekday,clock.minutes);
  const note=document.createElement('p');note.className='source-note';
- note.textContent=place.popularTimes
-  ?'Google popularity now: '+busy+' of 100 · '+(place.hoursSource||'saved Google Maps record')
-  :(place.popularTimesNote||'Google did not record popular times for this place.')+' · '+(place.hoursSource||'saved Google Maps record');
+ // A place can have popular times overall and still have nothing recorded for this hour.
+ note.textContent=(place.popularTimes
+  ?(busy===null||busy===undefined
+    ?'Google recorded no popularity for this hour.'
+    :'Google popularity now: '+busy+' of 100.')
+  :(place.popularTimesNote||'Google did not record popular times for this place.'))
+  +' · '+(place.hoursSource||'saved Google Maps record');
  host.append(note);
 }
 
@@ -291,7 +365,7 @@ function buildDayButtons(){
  for(let day=0;day<7;day++){
   const button=document.createElement('button');
   button.type='button';button.setAttribute('role','radio');
-  button.textContent=DAY_LETTERS[day];
+  button.textContent=DAY_NAMES[day].slice(0,3).toUpperCase();
   button.setAttribute('aria-label',DAY_NAMES[day]);
   button.onclick=()=>{clock.weekday=day;clock.live=false;applyTime();};
   fragment.append(button);
@@ -383,7 +457,7 @@ function openCount(){
 }
 
 function updateTimeReadout(light,dark){
- $('time-clock').textContent=clockLabel(clock.minutes);
+ engrave($('time-clock'),clockLabel(clock.minutes));
  $('time-zone').textContent=clock.zone;
  for(const [day,button] of [...$('time-days').children].entries())
   button.setAttribute('aria-checked',String(day===clock.weekday));
@@ -394,6 +468,10 @@ function updateTimeReadout(light,dark){
   light.moonAltitude>0?'night · moon '+Math.round(light.moonIlluminated*100)+'% lit':'night';
  const trade=known?`${open} of ${known} recorded places open`:'opening hours not recorded for this street';
  $('time-status').textContent=`${DAY_NAMES[clock.weekday]} · ${sky} · ${trade}`;
+ // The moon disc beside the reading is drawn from the real phase and altitude.
+ const moonUp=light.moonAltitude>0;
+ $('time-moon').style.setProperty('--lit',String(Math.round(light.moonIlluminated*100)/100));
+ $('time-moon').dataset.up=String(moonUp);
  $('world').dataset.minutes=String(Math.round(clock.minutes));
  $('world').dataset.weekday=String(clock.weekday);
  $('world').dataset.sunAltitude=sun.toFixed(2);
