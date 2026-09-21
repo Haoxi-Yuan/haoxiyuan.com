@@ -350,3 +350,19 @@ body[data-phase=picker] #picker-plate{animation:rise .9s .1s cubic-bezier(.22,1,
  body[data-phase=picker] #picker-title,body[data-phase=picker] #city-picker nav>button,
  body[data-phase=picker] #picker-plate{animation:none}
 }
+
+/* ===== V18: the controls are machines ==========================================
+   The selector and the clock are now modelled objects drawn over the street
+   (console.js). Their HTML remains, because it is what a keyboard and a screen
+   reader use; it is taken out of sight but left focusable, and focusing it lights
+   the part of the machine it belongs to. */
+body[data-machines=on] #city-mechanism,body[data-machines=on] #time-mechanism{
+ position:fixed;width:1px;height:1px;min-width:0;padding:0;margin:0;overflow:hidden;
+ clip-path:inset(50%);border:0;background:none;box-shadow:none;backdrop-filter:none;opacity:0}
+body[data-machines=on] #city-mechanism{left:24px;top:26px}
+body[data-machines=on] #time-mechanism{left:50%;bottom:26px;transform:none}
+body[data-machines=on] .mechanism-shell,body[data-machines=on] .paper-tail{display:none}
+body[data-machines=on] :is(#city-mechanism,#time-mechanism) :focus-visible{
+ position:fixed;width:auto;height:auto;clip-path:none;opacity:1;z-index:20;
+ padding:7px 11px;border-radius:8px;background:#05070be6;border:1px solid #cfe6fa;
+ color:#eaf3fb;font:500 11px/1.4 var(--ui);letter-spacing:.14em;text-transform:uppercase}

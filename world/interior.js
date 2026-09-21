@@ -83,6 +83,7 @@ export class Interior {
     ]);
     this.map = collision;
     this.data = data;
+    if(data.exteriorColor!==undefined)this.scene.background=new THREE.Color(data.exteriorColor);
     this.root = gltf.scene;
     this.root.traverse(object => {
       if (!object.isMesh) return;
@@ -596,7 +597,7 @@ export class Interior {
   setLights(on) {
     this.lightsOn = on;
     this.lightLevel = on ? 1 : 0.12;
-    this.fill.intensity = on ? 0.30 : 0.07;
+    this.fill.intensity = on ? (this.data.fillIntensity ?? 0.30) : 0.07;
     // Emissive fittings keep a glow when the house is dark; they are left on overnight.
     this.root?.traverse(object => {
       if (!object.isMesh) return;
@@ -634,7 +635,10 @@ export class Interior {
 
   render() {
     this.placeLights();
+    const exposure=this.renderer.toneMappingExposure;
+    this.renderer.toneMappingExposure=this.data.exposure??exposure;
     this.renderer.render(this.scene, this.camera);
+    this.renderer.toneMappingExposure=exposure;
   }
 
   /** What the visitor is pointing at, among the objects given. */
@@ -647,6 +651,7 @@ export class Interior {
 
   zone() {
     const y = this.walker.z;
+    if(this.data.zones)return this.data.zones.find(zone=>y>=zone.y[0]&&y<=zone.y[1])?.name||'entrance';
     if (y < -8.2) return 'entrance passage';
     if (y < -0.9) return 'lounge and bar';
     if (y < 4.2) return 'bell bridge';
@@ -672,13 +677,14 @@ export class Interior {
 
   dispose() {
     this.environment?.dispose();
-    const geometries = new Set(), materials = new Set();
+    const geometries = new Set(), materials = new Set(), textures = new Set();
     this.scene.traverse(object => {
       if (object.geometry) geometries.add(object.geometry);
-      for (const material of [object.material].flat().filter(Boolean)) materials.add(material);
+      for (const material of [object.material].flat().filter(Boolean)){materials.add(material);for(const v of Object.values(material))if(v?.isTexture)textures.add(v);}
     });
     geometries.forEach(geometry => geometry.dispose());
     materials.forEach(material => material.dispose());
+    textures.forEach(texture => texture.dispose());
     this.ready = false;
   }
 }

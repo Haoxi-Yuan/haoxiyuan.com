@@ -1,0 +1,13 @@
+.transit{position:fixed;inset:0;z-index:1000;background:#121920;color:#fff;isolation:isolate;touch-action:none}
+.transit canvas{width:100%;height:100%;display:block}
+.transit-shade{position:absolute;inset:0;background:#111820;opacity:0;transition:opacity .45s;pointer-events:none}
+.transit.covered .transit-shade{opacity:1}.transit.revealing{opacity:0;transition:opacity .6s;pointer-events:none}
+.transit-place{position:absolute;left:32px;bottom:34px;text-shadow:0 2px 16px #000;display:grid;gap:7px;pointer-events:none}
+.transit-place span{font:400 12px/1.4 system-ui;letter-spacing:.08em;opacity:.8}.transit-place strong{font:450 25px/1.2 system-ui;letter-spacing:-.02em}
+.transit-skip{position:absolute;top:25px;right:28px;border:1px solid #ffffff45;border-radius:24px;padding:12px 18px;color:#fff;background:#10182072;backdrop-filter:blur(14px);font:500 12px system-ui;cursor:pointer}
+.transit button:focus-visible{outline:2px solid #ffce87;outline-offset:5px}
+.transit-error{position:absolute;inset:0;display:grid;place-content:center;gap:18px;text-align:center;background:#111820ed;padding:24px}.transit-error[hidden]{display:none}
+.transit-error button{justify-self:center;border:1px solid #bbc5cc;border-radius:22px;background:transparent;padding:12px 24px;color:#fff;cursor:pointer}
+.transit.failed .transit-place{display:none}
+@media(max-width:600px){.transit-place{left:22px;bottom:28px}.transit-place strong{font-size:20px}.transit-skip{right:18px;top:18px}}
+@media(prefers-reduced-motion:reduce){.transit *,.transit{transition:none!important}.transit canvas{visibility:hidden}}

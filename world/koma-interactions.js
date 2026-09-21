@@ -25,6 +25,7 @@ export class KomaInteractions {
     this.ready = false;
     this.hovered = null;
     this.menus = [];
+    this.bottles = [];
     this.pickables = [];
     this.seats = [];
     this.tables = [];

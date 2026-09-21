@@ -2,18 +2,28 @@ import * as THREE from 'three';
 import { GLTFLoader } from '../assets/vendor/GLTFLoader.js';
 import { DRACOLoader } from '../assets/vendor/DRACOLoader.js';
 import { Daylight, SITES, zoneOffset, zoneLabel, openAt, popularityAt, clockLabel, DAY_NAMES } from './daylight.js';
-import { Interior } from './interior.js?v=19';
-import { KomaInteractions } from './koma-interactions.js?v=19';
-import { People } from './people.js?v=19';
+import { Interior } from './interior.js?v=26';
+import { RoomInteractions } from './room-interactions.js?v=25';
+import { INTERIOR_REGISTRY } from './interior-registry.js?v=27';
+import { KomaInteractions } from './koma-interactions.js?v=24';
+import { People } from './people.js?v=28';
+import { Console } from './console.js?v=33';
+import { Transit } from './transit.js?v=22';
+const transit=new Transit();
 
 const $=id=>document.getElementById(id);
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const state={phase:'loading',time:0,distance:0,targetDistance:0,paused:false,loaded:false,skip:false,drag:null,lookX:0,lookY:0};
 const CITIES=[
- {id:'singapore',name:'Singapore',district:'Temple Street · Chinatown',model:'singapore-city-v16.glb',places:'singapore-places.json',poster:'singapore-poster-v14.jpg'},
+ {id:'singapore',name:'Singapore',district:'Keong Saik Road · Chinatown',model:'keong-saik-street-v20.glb',places:'keong-saik-places-v20.json',people:'keong-saik-people-v20.json',poster:'keong-saik-poster-v20.jpg'},
  {id:'tokyo',name:'Tokyo',district:'Denboin-dori · Asakusa',model:'tokyo-city-v16.glb',places:'tokyo-places.json',poster:'tokyo-poster-v14.jpg'},
  {id:'london',name:'London',district:'Berwick Street · Soho',model:'london-city-v16.glb',places:'london-places.json',poster:'london-poster-v14.jpg'}
 ];
+const SG_STREETS={
+ 'keong-saik':{...CITIES[0],street:'keong-saik'},
+ temple:{id:'singapore',name:'Singapore',street:'temple',district:'Temple Street · Chinatown',model:'singapore-city-v16.glb',places:'singapore-places.json',people:'singapore-people-v16.json',poster:'singapore-poster-v14.jpg'}
+};
+Object.assign(CITIES[0],SG_STREETS[new URLSearchParams(location.search).get('street')]||SG_STREETS['keong-saik']);
 let cityIndex=Math.max(0,CITIES.findIndex(c=>c.id===new URLSearchParams(location.search).get('city')));
 const CURVE_START=29, BEND_RADIUS=42, STRIP_STEP=26;let TRAVEL_MAX=124;
 const uniform={fold:{value:.22},start:{value:CURVE_START}};
@@ -30,10 +40,12 @@ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 /** Engraved type carries its own text in data-text, for the two colour-fringe layers. */
 const engrave=(el,text)=>{el.textContent=text;el.dataset.text=text;};
 const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x)};
-let renderer,city,tunnel,camera,tunnelCamera,exitLight,headLight,lampPool=[],lampSpots=[],labels=[],raf=0,last=0,renderCount=0;
+let renderer,city,tunnel,camera,tunnelCamera,exitLight,headLight,lampPool=[],lampSpots=[],labels=[],raf=0,last=0,renderCount=0,machineMoving=false;
 let daylight=null,places=[],shopParts=new Map(),nightGlow=[],facadeParts=[],sunlit={},lastShopKey='';
-let interior=null,interiorLoad=null,doorSpots=[],interiorKeys={},interiorZone='';
+let interior=null,interiorLoad=null,doorSpots=[],interiorKeys={},interiorZone='',interiorId=null;
+let landscapeStats=null;
 let handling=null,handlingLoad=null,loadingProgress=0;
+let machines=null,machinesLoad=null;
 let loadVersion=0,modelRoot=null,stats={};
 const point=new THREE.Vector3();
 const bendGLSL=`
@@ -81,8 +93,9 @@ function foldPoint(p,anchor=null){
  p.z=-(start+BEND_RADIUS*Math.sin(a)+tail*Math.cos(a)+offset*Math.cos(a)-h*Math.sin(a));p.y=BEND_RADIUS*(1-Math.cos(a))+tail*Math.sin(a)+offset*Math.sin(a)+h*Math.cos(a);return p;
 }
 function announceCity(){
- const c=CITIES[cityIndex];const url=new URL(location.href);url.searchParams.set('city',c.id);history.replaceState(null,'',url);document.title=c.name+' — Haoxi Yuan';
+ const c=CITIES[cityIndex];const url=new URL(location.href);url.searchParams.set('city',c.id);if(c.street)url.searchParams.set('street',c.street);else url.searchParams.delete('street');history.replaceState(null,'',url);document.title=c.name+' — Haoxi Yuan';
  engrave($('city-name'),c.name);$('city-district').textContent=c.district;
+ machines?.setCity(cityIndex,c.name,c.district);
  // Re-strike the name so a change of city reads as the plate being stamped again.
  const plate=$('city-name');plate.classList.remove('restrike');void plate.offsetWidth;plate.classList.add('restrike');
  $('location-control').setAttribute('aria-label',c.name+', '+c.district+'. Choose a city');
@@ -90,7 +103,7 @@ function announceCity(){
  $('shop-labels').setAttribute('aria-label','Places in '+c.district);
  $('fallback').src='../assets/folded-city/'+c.poster;$('fallback').alt=c.name+' original 3D neighborhood study';
  $('city-mechanism').dataset.city=c.id;
- for(const el of document.querySelectorAll('[data-city]'))if(el.tagName==='BUTTON')el.setAttribute('aria-pressed',String(el.dataset.city===c.id));
+ for(const el of document.querySelectorAll('[data-city]'))if(el.tagName==='BUTTON')el.setAttribute('aria-pressed',String(el.dataset.city===c.id&&(!el.dataset.street||el.dataset.street===c.street)));
  $('city-status').textContent=c.name+' · '+c.district;
 }
 function animateMechanism(dt){
@@ -120,17 +133,43 @@ function disposeScene(scene){
  geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());
  scene.background?.isTexture&&scene.background.dispose();
 }
-async function selectCity(index){
- if(state.phase==='loading'||state.phase==='switching')return;
- const step=index-cityIndex;
- index=(index+CITIES.length)%CITIES.length;
- if(index===cityIndex){if(!state.loaded){state.skip=true;await load();}else{picker(false);showCity();}return;}
- stripTarget+=step;cityIndex=index;announceCity();state.targetDistance=state.distance;phase('switching');
- $('city-picker').hidden=true;$('city-mechanism').inert=false;$('shop-labels').inert=false;
- $('veil').style.background='#e5e7e4';$('veil').style.transition='opacity .45s';$('veil').style.opacity='1';schedule();
- await new Promise(resolve=>setTimeout(resolve,reduced.matches?0:460));
- state.skip=true;await load();
+async function prepareDestination(destination,onProgress){
+ const manager=new THREE.LoadingManager(),decoder=new DRACOLoader(manager).setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
+ const loader=new GLTFLoader(manager).setDRACOLoader(decoder);let timer;
+ try{return await Promise.race([
+  Promise.all([loader.loadAsync('../assets/folded-city/'+destination.model,e=>{if(e.total)onProgress(e.loaded/e.total);}),
+   fetch(destination.places).then(r=>{if(!r.ok)throw new Error('Destination records unavailable');return r.json();})]).then(([model,records])=>({model,records})),
+  new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Destination loading timed out')),180000);})
+ ]);}finally{clearTimeout(timer);decoder.dispose();}
 }
+async function selectCity(index,street){
+ if(transit.active||state.phase==='loading'||state.phase==='switching')return;
+ const step=index-cityIndex;index=(index+CITIES.length)%CITIES.length;
+ const next=index===0&&street?SG_STREETS[street]:CITIES[index];
+ if(!next)return;
+ if(index===cityIndex&&next.model===CITIES[cityIndex].model){if(!state.loaded){state.skip=true;await load();}else{picker(false);showCity();}return;}
+ const previousIndex=cityIndex,previous={...CITIES[0]},from=CITIES[cityIndex];
+ state.targetDistance=state.distance;phase('switching');dust(false);
+ $('city-picker').hidden=true;document.querySelector('.world-header').inert=true;$('shop-labels').inert=true;
+ $('threshold').hidden=true;$('veil').style.opacity='0';
+ let committed=false;
+ const ok=await transit.run({kind:from.id===next.id?'taxi':'flight',from:from.district.split(' · ')[0],to:next.district.split(' · ')[0]+' · '+next.name,
+  model:modelRoot,origin:camera.position.clone(),night:sunlit,reduced:reduced.matches,
+  prepare:progress=>prepareDestination(next,progress),
+  commit:async payload=>{
+   committed=true;cityIndex=index;if(index===0)Object.assign(CITIES[0],next);stripTarget+=step;
+   state.skip=true;await load(payload);
+   if(state.phase==='fallback')throw new Error('Destination could not be prepared');
+   transit.committing=true;render(0);await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));transit.committing=false;
+  }
+ });
+ transit.committing=false;
+ document.querySelector('.world-header').inert=false;$('shop-labels').inert=false;
+ if(!ok){if(committed){cityIndex=previousIndex;Object.assign(CITIES[0],previous);state.skip=true;await load();}else phase('city');}
+ $('world').focus();schedule();
+}
+window.transitStatus=()=>transit.status();
+
 function beginEnding(){
  state.endingTime=0;state.finished=false;phase('ending');$('skip').hidden=false;$('skip').setAttribute('aria-label','Skip ending');schedule();
 }
@@ -143,7 +182,7 @@ function finishJourney(){
 function phase(name){state.phase=name;document.body.dataset.phase=name;}
 function showCity(){
   if(!state.loaded){state.skip=true;$('loading-status').textContent='Opening '+CITIES[cityIndex].name+'…';return;}
-  phase('city');state.paused=false;state.time=0;state.targetDistance=state.distance=0;state.finished=false;state.endingTime=0;state.lookX=state.lookY=0;uniform.fold.value=.22;uniform.start.value=CURVE_START;
+  phase('city');state.paused=false;state.time=0;state.targetDistance=state.distance=streetLayout?.initialDistance||0;state.finished=false;state.endingTime=0;state.lookX=state.lookY=0;uniform.fold.value=.22;uniform.start.value=CURVE_START+state.distance*.78;
   $('city-picker').hidden=true;$('city-mechanism').inert=false;$('shop-labels').inert=false;journeyExit.visible=false;camera.fov=56;camera.updateProjectionMatrix();
   $('threshold').hidden=true;$('city-mechanism').hidden=false;$('time-mechanism').hidden=false;
   $('skip').hidden=true;$('pause').hidden=true;$('veil').style.transition='opacity .75s';$('veil').style.opacity='0';
@@ -195,8 +234,8 @@ function dust(open){
  dustRaf=requestAnimationFrame(frame);
 }
 
-function pickerPlate(id){
- const c=CITIES.find(city=>city.id===id)||CITIES[cityIndex];
+function pickerPlate(id,street){
+ const c=street?SG_STREETS[street]:(CITIES.find(city=>city.id===id)||CITIES[cityIndex]);
  const image=$('picker-plate-image'),source='../assets/folded-city/'+c.poster;
  if(!image.src.endsWith(c.poster)){image.dataset.swapping='true';image.src=source;
   image.onload=()=>{delete image.dataset.swapping;};}
@@ -205,8 +244,8 @@ function pickerPlate(id){
 }
 // Running the list changes the plate beside it, so the eye sees the street it is choosing.
 for(const button of document.querySelectorAll('#city-picker nav>button')){
- button.addEventListener('pointerenter',()=>pickerPlate(button.dataset.city));
- button.addEventListener('focus',()=>pickerPlate(button.dataset.city));
+ button.addEventListener('pointerenter',()=>pickerPlate(button.dataset.city,button.dataset.street));
+ button.addEventListener('focus',()=>pickerPlate(button.dataset.city,button.dataset.street));
 }
 $('city-picker').addEventListener('pointerleave',()=>pickerPlate());
 document.querySelector('#city-picker nav')?.addEventListener('pointerleave',()=>pickerPlate());
@@ -474,6 +513,9 @@ function updateTimeReadout(light,dark){
  $('time-moon').dataset.up=String(moonUp);
  $('world').dataset.minutes=String(Math.round(clock.minutes));
  $('world').dataset.weekday=String(clock.weekday);
+ machines?.setWeekday(clock.weekday);
+ machines?.setClock(clock.minutes,clock.zone,$('time-status').textContent,light.moonIlluminated,
+  light.moonAltitude>0,clock.live);
  $('world').dataset.sunAltitude=sun.toFixed(2);
  $('world').dataset.dark=dark.toFixed(3);
 }
@@ -485,40 +527,40 @@ const LAMP_LIGHTS=4;
 let lampPosts=[],lampLights=[];
 
 function buildLampRig(){
- for(const light of lampLights)light.parent?.remove(light);
- lampLights=[];lampPosts=[];
- if(!streetLayout)return;
- const half=streetLayout.roadWidth/2+.42;
- for(let y=-15;y<streetLayout.travelMax+5;y+=28){
-  const path=streetLayout.walkPath;let x=path[0][0];
-  for(let i=1;i<path.length;i++)if(y>=path[i-1][1]&&y<=path[i][1]){
-   const [xa,ya]=path[i-1],[xb,yb]=path[i];x=xa+(xb-xa)*(y-ya)/(yb-ya);break;
-  }
-  for(const side of [-1,1])lampPosts.push({x:x+side*half,y,height:4.55});
+ for(const light of lampLights){light.shadow?.map?.dispose();light.parent?.remove(light);light.target?.removeFromParent();}
+ lampLights=[];lampPosts=[];if(!streetLayout)return;
+ const authored=streetLayout.lights;
+ if(authored?.length)lampPosts=authored;
+ else for(let y=-15;y<streetLayout.travelMax+5;y+=28){
+  const {x}=sampleStreetPath(streetLayout.walkPath,y);
+  for(const side of [-1,1])lampPosts.push({x:x+side*(streetLayout.roadWidth/2+.42),y,height:4.55,kind:'street',strength:1.55});
  }
- for(let i=0;i<LAMP_LIGHTS;i++){
-  const light=new THREE.PointLight(0xffcf92,0,21,2);
-  light.visible=false;city.add(light);lampLights.push(light);
+ for(let i=0;i<(authored?.length?8:4);i++){
+  const light=new THREE.SpotLight(0xffd7a5,0,24,Math.PI*.37,.75,2);
+  light.castShadow=i<2;light.shadow.mapSize.set(1024,1024);light.shadow.bias=-.0001;light.shadow.normalBias=.025;
+  light.visible=false;city.add(light,light.target);lampLights.push(light);
  }
 }
-
 function placeLampLights(night){
  if(!lampLights.length)return;
  if(night<.08){for(const light of lampLights)light.visible=false;return;}
- const here=-28+state.distance;
- // A post level with the walker would flood the nearest wall, so the rig takes the
- // posts a little ahead and behind instead.
- const near=lampPosts
-  .map(post=>({post,gap:Math.abs(post.y-here)}))
-  .filter(entry=>entry.gap>3.5)
-  .sort((a,b)=>a.gap-b.gap).slice(0,LAMP_LIGHTS);
- for(const [index,light] of lampLights.entries()){
-  const entry=near[index];
-  if(!entry){light.visible=false;continue;}
-  light.visible=true;
-  light.position.copy(foldPoint(new THREE.Vector3(entry.post.x,entry.post.height,-entry.post.y),entry.post.y));
-  // Fall off with distance so a lamp behind the walker does not light the road ahead.
-  light.intensity=night*1.55*Math.max(0,1-entry.gap/30);
+ const here=state.streetPosition?.[1]??-28+state.distance;
+ const available=lampPosts.filter(post=>{
+  if(post.kind!=='shop')return true;
+  const status=shopStatus(places[post.slot]);return status?status.open:clock.minutes>=480&&clock.minutes<1320;
+ }).map(post=>({post,gap:Math.abs(post.y-here)}));
+ const streets=available.filter(v=>v.post.kind==='street').sort((a,b)=>a.gap-b.gap).slice(0,3);
+ const shops=available.filter(v=>v.post.kind==='shop').sort((a,b)=>a.gap-b.gap).slice(0,5);
+ // Fixed light count: street fixtures keep the first two shadow-map slots.
+ const selected=streetLayout.lights?.length?[...streets,...shops]:available.sort((a,b)=>a.gap-b.gap).slice(0,4);
+ for(const [i,light] of lampLights.entries()){
+  const entry=selected[i];light.visible=!!entry&&entry.gap<38;if(!light.visible)continue;
+  const p=entry.post,anchor=p.anchor??p.y;
+  light.color.set(p.color||'#ffdbad');light.position.copy(foldPoint(new THREE.Vector3(p.x,p.height,-p.y),anchor));
+  const n=p.normal||[0,0],reach=p.kind==='shop'?1.4:0;
+  light.target.position.copy(foldPoint(new THREE.Vector3(p.x+n[0]*reach,.12,-p.y-n[1]*reach),anchor));
+  light.distance=p.kind==='shop'?9:24;light.angle=p.kind==='shop'?1.02:1.18;
+  light.intensity=night*(p.strength||1.55)*smooth((38-entry.gap)/10);
  }
 }
 // --- stepping inside -----------------------------------------------------------------
@@ -577,31 +619,32 @@ async function enterInterior(place,slot){
  $('veil').style.transition='opacity .5s';$('veil').style.background='#07050a';$('veil').style.opacity='1';
  $('interior-status').textContent='Opening '+place.name+'…';
  try{
+  const descriptor=typeof place.interior==='object'?place.interior:{id:'koma'};
+  const id=descriptor.id||'koma';
+  if(interiorId!==id){await releaseInterior();interiorId=id;}
   if(!interior){
    interior=new Interior(renderer);
    const decoder=new DRACOLoader().setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
    const loader=new GLTFLoader().setDRACOLoader(decoder);
-   interiorLoad=interior.load(loader,INTERIOR_MODEL,INTERIOR_DATA,INTERIOR_COLLISION).finally(()=>decoder.dispose());
+   interiorLoad=interior.load(loader,descriptor.model||INTERIOR_MODEL,descriptor.data||INTERIOR_DATA,descriptor.collision||INTERIOR_COLLISION).finally(()=>decoder.dispose());
   }
   await interiorLoad;
   if(!handling){
-   handling=new KomaInteractions(interior,{
-    propsURL:'../assets/folded-city/koma-props-v15.glb',
-    menuURL:'koma-menu-v15.json',
-    pagesBase:'../assets/folded-city/koma-menu/',
-    soundsBase:'../assets/folded-city/koma-sounds/',
-    onReading:reading,onHolding:holding=>{document.body.dataset.holding=String(holding);},
-    onSeated:seated=>{document.body.dataset.seated=String(seated);},
-    onDish:showDish,
-   });
-   const decoder=new DRACOLoader().setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
-   handlingLoad=handling.load(new GLTFLoader().setDRACOLoader(decoder)).finally(()=>decoder.dispose());
+   if(id==='koma'){
+    handling=new KomaInteractions(interior,{
+     propsURL:'../assets/folded-city/koma-props-v15.glb',menuURL:'koma-menu-v15.json',
+     pagesBase:'../assets/folded-city/koma-menu/',soundsBase:'../assets/folded-city/koma-sounds/',
+     onReading:reading,onHolding:holding=>{document.body.dataset.holding=String(holding);},
+     onSeated:seated=>{document.body.dataset.seated=String(seated);},onDish:showDish,
+    });
+    const decoder=new DRACOLoader().setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
+    handlingLoad=handling.load(new GLTFLoader().setDRACOLoader(decoder)).finally(()=>decoder.dispose());
+    handlingLoad.catch(error=>console.error('Interior props:',error));
+   }else{handling=new RoomInteractions(interior);handlingLoad=Promise.resolve();}
   }
-  // The room opens without waiting for the props; they arrive a moment later.
-  handlingLoad.catch(error=>{console.error('KOMA props:',error);});
  }catch(error){
   console.error('KOMA interior:',error);
-  interior=null;interiorLoad=null;
+  await releaseInterior();
   $('interior-status').textContent='The interior could not be loaded.';
   phase('city');$('veil').style.opacity='0';schedule();return;
  }
@@ -627,6 +670,16 @@ async function enterInterior(place,slot){
  schedule();
 }
 
+let interiorRelease=Promise.resolve();
+async function releaseInterior(){
+ if(!interior){await interiorRelease;return;}
+ const old=interior,oldHandling=handling,pending=handlingLoad;
+ komaPeopleKey='';PEOPLE.remove(komaPeople);komaPeople=[];
+ interior=null;interiorLoad=null;handling=null;handlingLoad=null;interiorId=null;
+ interiorRelease=(async()=>{try{await pending;}catch{}try{oldHandling?.reset();}catch{}old.dispose();})();
+ await interiorRelease;
+}
+
 function leaveInterior(){
  if(state.phase!=='interior')return;
  phase('leaving');
@@ -641,7 +694,7 @@ function leaveInterior(){
   phase('city');
   $('veil').style.transition='opacity .7s';$('veil').style.opacity='0';
   $('interior-status').textContent='Back on '+(streetLayout?.street||'the street')+'.';
-  resize();schedule();
+  releaseInterior();resize();schedule();
  },reduced.matches?0:460);
 }
 
@@ -649,13 +702,13 @@ function leaveInterior(){
 // While the restaurant is serving, diners sit at a share of its tables and staff stand at
 // the host stand and the bar; when it is closed the room is empty. Who sits where is fixed
 // for a given day, so walking out and back in finds the same room.
-const PEOPLE=new People('people-v16.json','../assets/folded-city/');
+const PEOPLE=new People('people-v21.json','../assets/folded-city/');
 let komaPeople=[],komaPeopleKey='';
 const DINER_SEATS=['seat-dining','seat-island','seat-bridge','seat-alcove','seat-mezzanine'];
 const MAX_DINERS=22;
 function seeded(seed){return()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};}
 async function populateKoma(open){
- const key=open+':'+clock.weekday;
+ const key=interiorId+':'+open+':'+clock.weekday;
  if(key===komaPeopleKey)return;
  komaPeopleKey=key;
  PEOPLE.remove(komaPeople);komaPeople=[];
@@ -670,10 +723,10 @@ async function populateKoma(open){
  const jobs=[];
  chosen.forEach((seat,n)=>{
   if(!seatedMotions.length)return;
-  const [x,y]=seat.centre,floor=seat.z[0];
+  const [x,y]=seat.centre,floor=seat.z[0]+Math.max(0,(seat.seatHeight||.46)-.46);
   const table=tables.reduce((best,t)=>{const d=Math.hypot(t.centre[0]-x,t.centre[1]-y);return d<best.d?{t,d}:best;},{t:null,d:9}).t;
   // Blender plan (x, y) is scene (x, -z); face the table across the plan.
-  const yaw=table?Math.atan2(table.centre[0]-x,-(table.centre[1]-y)):0;
+  const yaw=seat.yaw??(table?Math.atan2(table.centre[0]-x,-(table.centre[1]-y)):0);
   jobs.push({look:PEOPLE.look(n),motion:seatedMotions[n%seatedMotions.length],position:new THREE.Vector3(x,floor,-y),yaw});
  });
  if(standing){
@@ -684,7 +737,7 @@ async function populateKoma(open){
    jobs.push({look:PEOPLE.look(40+k),motion:standing,position:new THREE.Vector3(x,interior.floorAt(x,y+.75)??0,-(y+.75)),yaw:0});
   });
  }
- const made=await Promise.all(jobs.map(job=>PEOPLE.spawn({...job.look,motion:job.motion,phase:rand()}).then(entry=>{
+ const made=await Promise.all(jobs.map(job=>PEOPLE.spawn({...job.look,motion:job.motion,phase:rand(),walkSpeed:job.walker?job.speed:undefined}).then(entry=>{
   entry.person.position.copy(job.position);entry.person.rotation.y=job.yaw;return entry;
  }).catch(error=>{console.warn('KOMA person:',error);return null;})));
  if(komaPeopleKey!==key){PEOPLE.remove(made.filter(Boolean));return;}
@@ -697,45 +750,51 @@ async function populateKoma(open){
 // and walkers along the pavements once a walking motion has been downloaded. How many are
 // out follows the street's saved Google popular times where there are any (Singapore), and
 // the ordinary rhythm of a day where there are none (Tokyo, London).
-let streetCrowd=[],streetCrowdCity='';
+let streetCrowd=[],streetCrowdCity='',crowdLoadVersion=0;
 const STREET_REACH=90;
 const personEuler=new THREE.Euler(0,0,0,'XYZ');
-function clearStreetPeople(){PEOPLE.remove(streetCrowd.map(item=>item.entry));streetCrowd=[];streetCrowdCity='';}
+function clearStreetPeople(){crowdLoadVersion++;PEOPLE.remove(streetCrowd.map(item=>item.entry));streetCrowd=[];streetCrowdCity='';}
 async function populateStreet(){
  const id=CITIES[cityIndex].id;
  if(streetCrowdCity===id)return;
- clearStreetPeople();streetCrowdCity=id;
+ clearStreetPeople();streetCrowdCity=id;const crowdVersion=crowdLoadVersion;
  let spots;
  try{
   await PEOPLE.load();
-  const response=await fetch(id+'-people-v16.json');
+  const response=await fetch(CITIES[cityIndex].people||id+'-people-v16.json');
   if(!response.ok)return;
   spots=await response.json();
  }catch(error){console.warn('Street people:',error);return;}
- if(streetCrowdCity!==id||!PEOPLE.characters.length)return;
+ if(crowdVersion!==crowdLoadVersion||streetCrowdCity!==id||!PEOPLE.characters.length)return;
  const talking=PEOPLE.motionsFor('talking'),standing=PEOPLE.motionsFor('standing'),walking=PEOPLE.motionFor('walking');
  const rand=seeded(id.length*977+17),jobs=[];let n=0;
  spots.groups.forEach((group,g)=>{
   const rank=rand();
   group.members.forEach(([x,y,yaw],k)=>{
-   const motion=k===0&&talking.length?talking[g%talking.length]:(standing[(g+k)%Math.max(1,standing.length)]||talking[0]);
+   const motion=k===0?'talking':'listening';
    if(!motion)return;
    // Plan yaw faces along plan (sin, cos); the scene's forward is -z for plan +y.
-   jobs.push({look:PEOPLE.look(n++),motion,s:y,x,yaw:Math.atan2(Math.sin(yaw),-Math.cos(yaw)),rank,ground:spots.groundZ});
+   jobs.push({look:PEOPLE.look(n++,true),motion,s:y,x,yaw:Math.atan2(Math.sin(yaw),-Math.cos(yaw)),rank,ground:spots.groundZ});
   });
+ });
+ const activityProfile={singapore:['phone','looking-around','drinking','standing-idle'],tokyo:['looking-around','phone','standing-idle','looking-around'],london:['drinking','looking-around','phone','standing-idle']}[id];
+ spots.groups.forEach((group,i)=>{
+  const [x,y,yaw]=group.members[0],motion=activityProfile[i%activityProfile.length];
+  const slot=places.reduce((best,p,k)=>{const sy=-(p.scenePosition?.[2]||0);return Math.abs(sy-y)<best.gap?{slot:k,gap:Math.abs(sy-y)}:best;},{slot:-1,gap:Infinity});
+  jobs.push({look:PEOPLE.look(n++,true),motion,s:y+2.5,x,yaw:Math.atan2(Math.sin(yaw),-Math.cos(yaw)),rank:rand()*.6,ground:spots.groundZ,activity:true,shop:slot.gap<20?slot.slot:null});
  });
  if(walking){
   for(const lane of spots.lanes){
-   const count=Math.round(spots.travelMax/16);
+   const count=Math.round(spots.travelMax/24);
    for(let i=0;i<count;i++){
-    jobs.push({look:PEOPLE.look(n++),motion:walking,s:rand()*(spots.travelMax+30)-15,lane,rank:rand(),
+    jobs.push({look:PEOPLE.look(n++,true),motion:walking,s:-24+rand()*(spots.travelMax-8),lane,rank:rand(),
      dir:lane.side>0?1:-1,speed:1.15+rand()*.35,ground:spots.groundZ,walker:true});
    }
   }
  }
- const made=await Promise.all(jobs.map(job=>PEOPLE.spawn({...job.look,motion:job.motion,phase:rand()})
+ const made=await Promise.all(jobs.map(job=>PEOPLE.spawn({...job.look,motion:job.motion,phase:rand(),walkSpeed:job.walker?job.speed:undefined})
   .then(entry=>({...job,entry})).catch(error=>{console.warn('Street person:',error);return null;})));
- if(streetCrowdCity!==id){PEOPLE.remove(made.filter(Boolean).map(item=>item.entry));return;}
+ if(crowdVersion!==crowdLoadVersion||streetCrowdCity!==id){PEOPLE.remove(made.filter(Boolean).map(item=>item.entry));return;}
  for(const item of made){if(!item)continue;item.entry.person.visible=false;city.add(item.entry.person);streetCrowd.push(item);}
  schedule();
 }
@@ -746,30 +805,47 @@ function crowdDensity(){
  return h<5.5?.08:h<8?.08+(h-5.5)*.25:h<21?.85:.85-(h-21)*.22;
 }
 function foldAngle(s){const start=uniform.start.value;return s<=start?0:Math.min((s-start)/BEND_RADIUS,Math.PI*uniform.fold.value);}
+function sampleStreetPath(path,s){
+ if(!path?.length)return {x:0,slope:0,y:s};
+ let i=path.findIndex((p,j)=>j>0&&s<=p[1]);if(i<1)i=path.length-1;
+ const [xa,ya]=path[Math.max(0,i-1)],[xb,yb]=path[i];
+ const slope=(xb-xa)/Math.max(.001,yb-ya),y=clamp(s,ya,yb);
+ return {x:xa+(y-ya)*slope,slope,y};
+}
 function updateStreetPeople(dt){
  if(!streetCrowd.length)return;
- const density=crowdDensity(),here=state.streetPosition?.[1]??0,path=streetLayout?.walkPath||[];
+ const density=crowdDensity(),here=state.streetPosition?.[1]??0;
  for(const item of streetCrowd){
-  const person=item.entry.person;
+  const person=item.entry.person;let x=item.x,yaw=item.yaw,groundY=item.s;
   if(item.walker){
-   item.s+=item.dir*item.speed*dt;
-   if(item.s>TRAVEL_MAX+15)item.s=-15;else if(item.s<-15)item.s=TRAVEL_MAX+15;
+   const path=item.lane.points||streetLayout?.walkPath||[];
+   const sample=sampleStreetPath(path,item.s);
+   // A steady world speed along a curved lane, synchronized to the planted foot cycle.
+   const obstacle=streetCrowd.some(other=>other!==item&&other.walker&&other.lane.side===item.lane.side&&other.rank<density&&
+       (other.s-item.s)*item.dir>0&&(other.s-item.s)*item.dir<1.05);
+   item.velocity=THREE.MathUtils.damp(item.velocity??item.speed,obstacle?0:item.speed,5,dt);
+   const step=item.velocity*dt/Math.hypot(1,sample.slope);
+   item.s+=item.dir*step;
+   const lo=path[0]?.[1]??-24,hi=path.at(-1)?.[1]??TRAVEL_MAX;
+   if(item.s>hi)item.s=lo;else if(item.s<lo)item.s=hi;
+   const next=sampleStreetPath(path,item.s);x=next.x;
+   if(!item.lane.points)x+=item.lane.side*item.lane.offset;
+   groundY=next.y;yaw=Math.atan2(next.slope*item.dir,-item.dir);
+   item.entry.action.timeScale=item.entry.gaitRate*(item.velocity/item.speed);
   }
-  const show=item.rank<density&&Math.abs(item.s-here)<STREET_REACH;
-  person.visible=show;
-  if(!show)continue;
-  let x=item.x,yaw=item.yaw;
-  if(item.walker){
-   let px=0,slope=0;
-   for(let i=1;i<path.length;i++)if(item.s>=path[i-1][1]&&item.s<=path[i][1]){
-    const [xa,ya]=path[i-1],[xb,yb]=path[i];slope=(xb-xa)/(yb-ya);px=xa+(item.s-ya)*slope;break;}
-   x=px+item.lane.side*item.lane.offset;
-   yaw=Math.atan2(slope*item.dir,-item.dir);
+  const activityOpen=item.shop==null||openAt(places[item.shop],clock.weekday,clock.minutes)!==false;
+  const show=item.rank<density&&Math.abs(groundY-here)<STREET_REACH&&activityOpen;
+  person.visible=show;if(!show)continue;
+  let ground=item.ground;
+  for(const road of streetLayout?.walkSurfaces||[]){
+   const [ax,ay]=road.a,[bx,by]=road.b,dx=bx-ax,dy=by-ay;
+   const u=clamp(((x-ax)*dx+(groundY-ay)*dy)/(dx*dx+dy*dy||1),0,1);
+   if(Math.hypot(x-ax-u*dx,groundY-ay-u*dy)<road.halfWidth){ground=road.z;break;}
   }
-  const p=foldPoint(point.set(x,item.ground,-item.s),item.s);
-  person.position.copy(p);
-  person.quaternion.setFromEuler(personEuler.set(foldAngle(item.s),yaw,0));
-  item.entry.mixer.update(dt);
+  person.position.copy(foldPoint(point.set(x,ground,-groundY),groundY));
+  const target=new THREE.Quaternion().setFromEuler(personEuler.set(foldAngle(groundY),yaw,0));
+  if(item.wasVisible)person.quaternion.slerp(target,1-Math.exp(-8*dt));else person.quaternion.copy(target);
+  item.wasVisible=true;PEOPLE.step(item.entry,reduced.matches?0:dt);
  }
 }
 
@@ -866,15 +942,13 @@ function walkCamera(){
   const end=state.finished?1:state.phase==='ending'?smooth(state.endingTime/4.5):0;
   const s=-28+state.distance+end*16,a=Math.min(Math.max(s-uniform.start.value,0)/BEND_RADIUS,Math.PI*uniform.fold.value);
   const path=streetLayout?.walkPath||[];
-  let pathX=0,pathSlope=0;
-  for(let i=1;i<path.length;i++)if(s>=path[i-1][1]&&s<=path[i][1]){
-   const [xa,ya]=path[i-1],[xb,yb]=path[i];pathSlope=(xb-xa)/(yb-ya);pathX=xa+(s-ya)*pathSlope;break;
-  }
-  state.streetPosition=[pathX,s];camera.position.copy(foldPoint(new THREE.Vector3(pathX,2.2,-s)));
+  const current=sampleStreetPath(path,s),ahead=sampleStreetPath(path,s+6);
+  const pathX=current.x,pathSlope=(ahead.x-current.x)/Math.max(.1,ahead.y-current.y);
+  state.streetPosition=[pathX,s];camera.position.copy(foldPoint(new THREE.Vector3(pathX,streetLayout?.eyeHeight||2.2,-s)));
   const up=new THREE.Vector3(0,Math.cos(a),Math.sin(a));
   const forward=new THREE.Vector3(pathSlope,Math.sin(a),-Math.cos(a)).normalize();
   camera.up.copy(up);
-  const target=camera.position.clone().addScaledVector(forward,12).addScaledVector(up,1.75+state.lookY*5);
+  const target=camera.position.clone().addScaledVector(forward,12).addScaledVector(up,(streetLayout?.eyeHeight?0:1.75)+state.lookY*5);
   target.x+=state.lookX*8*(1-end);camera.lookAt(target);
   camera.fov=56+end*13;camera.updateProjectionMatrix();
   daylight?.follow(camera.position);
@@ -898,7 +972,7 @@ function markerOccluded(marker){
 }
 
 function init(){
-  tunnel?.environment?.dispose();clearStreetPeople();disposeScene(city);disposeScene(tunnel);daylight?.dispose();daylight=null;renderer?.dispose();state.loaded=false;
+  releaseInterior();landscapeStats=null;tunnel?.environment?.dispose();clearStreetPeople();disposeScene(city);disposeScene(tunnel);daylight?.dispose();daylight=null;renderer?.dispose();state.loaded=false;
   renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true,alpha:false,powerPreference:'high-performance'});
   renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=.9;
@@ -929,10 +1003,48 @@ function init(){
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:'varying vec2 vUv;void main(){float d=length(vUv-.5)*2.;float a=pow(max(0.,1.-d),4.)*.35;gl_FragColor=vec4(.95,.93,.88,a);}'
   }));glow.position.set(0,3.35,-86.2);tunnel.add(glow);
+  if(!machines){
+   machines=new Console(renderer);
+   machines.onCity=delta=>selectCity(cityIndex+delta);
+   machines.onWeekday=day=>{clock.weekday=day;clock.live=false;applyTime();};
+   machines.onMinutes=minutes=>{clock.live=false;$('time-slider').value=String(Math.round(minutes));
+    clock.minutes=Math.round(minutes);applyTime();};
+   machines.onNow=()=>$('time-now').click();
+   machines.onPicker=()=>picker(true);
+   machinesLoad=machines.load('../assets/folded-city/console-v18.glb?v=20','console-v18.json?v=20')
+    .then(()=>{machines.resize(innerWidth,innerHeight);document.body.dataset.machines='on';
+     announceCity();applyTime(true);schedule();})
+    .catch(error=>{console.warn('Console:',error);machines=null;});
+  }
   resize();
 }
 
-async function load(){
+async function detailLandscape(root,scene,slug,version,folded=true){
+ const decoder=new DRACOLoader().setDecoderPath('../assets/vendor/draco/').setWorkerLimit(1);
+ try{
+  const gltf=await new GLTFLoader().setDRACOLoader(decoder).loadAsync('../assets/folded-city/landscape-v23/'+slug+'.glb?v=3');
+  if(version!==loadVersion){disposeScene(gltf.scene);return;}
+  let meshes=0,triangles=0;
+  gltf.scene.traverse(o=>{if(!o.isMesh)return;meshes++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;
+   o.castShadow=false;o.receiveShadow=true;
+   if(!folded){o.material.fog=false;if(o.material.name!=='portal backdrop')o.material.emissive.copy(o.material.color).multiplyScalar(.35);}
+   if(folded){o.frustumCulled=false;o.geometry.setAttribute('bendAnchor',o.geometry.attributes.uv2);o.material=bendMaterial(o.material);}
+  });
+  if(!folded)root.traverse(o=>{if(o.isMesh&&o.material?.name==='daylight sky')o.visible=false;});
+  scene.add(gltf.scene);if(folded)landscapeStats={slug,meshes,triangles};
+  const loader=new THREE.TextureLoader();
+  loader.load('../assets/folded-city/landscape-v23/ground.webp',texture=>{
+   if(version!==loadVersion){texture.dispose();return;}
+   texture.encoding=THREE.sRGBEncoding;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2,2);texture.anisotropy=4;
+   let used=false;root.traverse(o=>{if(!o.isMesh)return;for(const mat of materialsOf(o))if(mat.name==='mapped green'||mat.name==='exterior daylight grass'){
+    mat.map=texture;mat.color.setRGB(.5,.54,.4);mat.needsUpdate=true;used=true;
+   }});if(!used)texture.dispose();schedule();
+  });schedule();
+ }catch(error){console.warn('Optional landscape layer:',error.message);}finally{decoder.dispose();}
+}
+
+async function load(prepared=null){
+  const direct=!!prepared||state.skip||reduced.matches||new URLSearchParams(location.search).has('street');
   const version=++loadVersion;announceCity();$('retry').hidden=true;phase('loading');$('threshold').hidden=false;$('threshold').style.opacity='1';$('city-mechanism').hidden=false;$('city-mechanism').setAttribute('aria-busy','true');$('location-control').disabled=true;$('city-previous').disabled=$('city-next').disabled=true;
   $('loading-status').textContent='Opening '+CITIES[cityIndex].name+'…';
   loadingProgress=0;state.holding=false;
@@ -948,25 +1060,26 @@ async function load(){
     // of seconds; the city starts downloading the moment the tunnel is in.
     let cityDownload=null;
     const startCity=()=>{
-      cityDownload=cityDownload||loader.loadAsync('../assets/folded-city/'+CITIES[cityIndex].model,event=>{
+      cityDownload=cityDownload||(prepared?Promise.resolve(prepared.model):loader.loadAsync('../assets/folded-city/'+CITIES[cityIndex].model,event=>{
         if(!event.total||version!==loadVersion)return;
         loadingProgress=event.loaded/event.total;
         if(state.phase==='loading'||state.holding)$('loading-status').textContent='Opening '+cityName+'… '+Math.round(loadingProgress*100)+'%';
-      });
+      }));
       cityDownload.catch(()=>{});
       return cityDownload;
     };
     let timer;
     const result=await Promise.race([
       Promise.all([
-        loader.loadAsync('../assets/folded-city/portal-tunnel-v16.glb').then(gltf=>{startCity();return gltf;}),
+        (direct?Promise.resolve({scene:new THREE.Group()}):loader.loadAsync('../assets/folded-city/portal-tunnel-v16.glb')).then(gltf=>{startCity();return gltf;}),
         null,
-        CITIES[cityIndex].places?fetch(CITIES[cityIndex].places).then(response=>{if(!response.ok)throw new Error('Place records could not be loaded.');return response.json();}):Promise.resolve({places:[]})
+        prepared?Promise.resolve(prepared.records):CITIES[cityIndex].places?fetch(CITIES[cityIndex].places).then(response=>{if(!response.ok)throw new Error('Place records could not be loaded.');return response.json();}):Promise.resolve({places:[]})
       ]),
       new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('The 3D scene took too long to load.')),60000)})
     ]).finally(()=>clearTimeout(timer));
     if(version!==loadVersion)return;
     tunnel.add(result[0].scene);
+    if(!direct)detailLandscape(result[0].scene,tunnel,'portal',version,false);
     result[0].scene.traverse(o=>{
       if(o.userData.tunnelLamps)for(const p of JSON.parse(o.userData.tunnelLamps))lampSpots.push(new THREE.Vector3(...p));
       if(!o.isMesh)return;
@@ -977,8 +1090,7 @@ async function load(){
       for(const t of [o.material.map,o.material.normalMap,o.material.roughnessMap])if(t)t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
     });
     // One-off reflection probe of the tunnel itself (lamp lenses, the daylit mouth) for wet floor and metal.
-    const probe=new THREE.PMREMGenerator(renderer);tunnel.environment=probe.fromScene(tunnel,.04,.1,200).texture;probe.dispose();
-    const direct=state.skip||reduced.matches||new URLSearchParams(location.search).has('street');
+    if(!direct){const probe=new THREE.PMREMGenerator(renderer);tunnel.environment=probe.fromScene(tunnel,.04,.1,200).texture;probe.dispose();}
     if(!direct){phase('tunnel');state.time=0;state.holding=false;$('loading-status').textContent='';$('pause').hidden=false;schedule();}
     const cityResult=await Promise.race([
       startCity(),
@@ -988,7 +1100,7 @@ async function load(){
     modelRoot=cityResult.scene;
     modelRoot.traverse(o=>{
       if(!o.isMesh)return;
-      o.frustumCulled=false;o.castShadow=true;o.receiveShadow=true;
+      o.frustumCulled=false;o.castShadow=!materialsOf(o).some(m=>m.transparent);o.receiveShadow=true;
       if(!o.geometry.attributes.uv2)throw new Error('The city model is missing its bend anchors.');
       o.geometry.setAttribute('bendAnchor',o.geometry.attributes.uv2);
       const prepare=original=>{
@@ -1003,13 +1115,17 @@ async function load(){
       };
       o.material=Array.isArray(o.material)?o.material.map(prepare):prepare(o.material);
       o.customDepthMaterial=bendMaterial(new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:o.material.map,alphaTest:o.material.alphaTest,side:o.material.side}),true);
+      o.customDistanceMaterial=bendMaterial(new THREE.MeshDistanceMaterial({map:o.material.map,alphaTest:o.material.alphaTest}),true);
     });
-    city.add(modelRoot);state.loaded=true;$('city-mechanism').setAttribute('aria-busy','false');$('location-control').disabled=false;$('city-previous').disabled=$('city-next').disabled=false;
+    city.add(modelRoot);state.loaded=true;
+    const detailSlug=CITIES[cityIndex].street==='keong-saik'?'keong-saik':CITIES[cityIndex].id;
+    setTimeout(()=>{if(version===loadVersion)detailLandscape(modelRoot,city,detailSlug,version);},600);$('city-mechanism').setAttribute('aria-busy','false');$('location-control').disabled=false;$('city-previous').disabled=$('city-next').disabled=false;
     streetLayout=result[2].layout||null;TRAVEL_MAX=streetLayout?.travelMax||124;
-    places=result[2].places||[];labels=places.map(makeLabel);
+    places=(result[2].places||[]).map(place=>INTERIOR_REGISTRY[place.place_id]?{...place,interior:INTERIOR_REGISTRY[place.place_id]}:place);labels=places.map(makeLabel);
     $('door-hotspots').replaceChildren();
     doorSpots=places.map((place,slot)=>place.interior?makeDoorSpot(place,slot):null).filter(Boolean);
-    registerTimedParts(modelRoot);buildLampRig();startClock();populateStreet();
+    registerTimedParts(modelRoot);buildLampRig();startClock();
+    setTimeout(()=>{if(version===loadVersion)populateStreet();},450);
     stats={meshes:0,triangles:0};modelRoot.traverse(o=>{if(o.isMesh){stats.meshes++;stats.triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
     state.holding=false;
     if(direct||state.skip)showCity();
@@ -1027,7 +1143,7 @@ function fallback(message){
 }
 
 function render(dt){
-  if(!renderer)return;
+  if(!renderer||(transit.active&&!transit.committing))return;
   renderCount++;
   if(state.phase==='interior'){renderCount++;interiorFrame(dt);return;}
   animateMechanism(dt);
@@ -1059,6 +1175,7 @@ function render(dt){
       if(state.endingTime>=4.6)finishJourney();
     }
     updateCurve(dt);walkCamera();updateStreetPeople(dt);renderer.render(city,camera);
+    if(machines){machines.setVisible(state.phase==='city',state.phase==='city');machineMoving=machines.update(dt);machines.render();}
     $('world').dataset.camera=camera.position.toArray().join(',');
     $('world').dataset.cameraUp=camera.up.toArray().join(',');
     $('world').dataset.cameraQuaternion=camera.quaternion.toArray().join(',');
@@ -1088,19 +1205,19 @@ function render(dt){
 }
 
 function loop(now){raf=0;const dt=clamp((now-last)/1000||.016,0,.05);last=now;render(dt);
- if(!document.hidden&&(state.phase==='interior'||(state.phase==='city'&&streetCrowd.length>0)||state.phase==='tunnel'&&!state.paused||state.phase==='ending'||state.phase==='switching'||Math.abs(state.distance-state.targetDistance)>.005||Math.abs(uniform.fold.value-state.foldTarget)>.0001||Math.abs(uniform.start.value-state.startTarget)>.005||Math.abs(stripPosition-stripTarget)>.001||Math.abs(stripVelocity)>.001))schedule();
+ if(!document.hidden&&(state.phase==='interior'||machineMoving||(state.phase==='city'&&streetCrowd.length>0)||state.phase==='tunnel'&&!state.paused||state.phase==='ending'||state.phase==='switching'||Math.abs(state.distance-state.targetDistance)>.005||Math.abs(uniform.fold.value-state.foldTarget)>.0001||Math.abs(uniform.start.value-state.startTarget)>.005||Math.abs(stripPosition-stripTarget)>.001||Math.abs(stripVelocity)>.001))schedule();
 }
-function schedule(){if(!raf&&!document.hidden){last=performance.now();raf=requestAnimationFrame(loop);}}
-function resize(){if(!renderer)return;renderer.setSize(innerWidth,innerHeight,false);for(const c of [camera,tunnelCamera]){c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();}interior?.resize(innerWidth,innerHeight);if(handling?.reading){handling.layoutBook();handling.showSpread(handling.reading.spread);}schedule();}
+function schedule(){if(!raf&&!document.hidden){if(!last||performance.now()-last>250)last=performance.now();raf=requestAnimationFrame(loop);}}
+function resize(){if(!renderer)return;renderer.setSize(innerWidth,innerHeight,false);machines?.resize(innerWidth,innerHeight);for(const c of [camera,tunnelCamera]){c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();}interior?.resize(innerWidth,innerHeight);if(handling?.reading){handling.layoutBook();handling.showSpread(handling.reading.spread);}schedule();}
 function move(value){state.targetDistance=clamp(value,0,TRAVEL_MAX);schedule();}
 
 $('skip').onclick=()=>state.phase==='ending'?finishJourney():showCity();$('retry').onclick=()=>{state.skip=true;load();};
 $('pause').onclick=()=>{state.paused=!state.paused;$('pause').setAttribute('aria-pressed',String(state.paused));$('pause').setAttribute('aria-label',state.paused?'Resume journey':'Pause journey');schedule();};
 $('location-control').onclick=()=>picker(true);
 $('city-previous').onclick=()=>selectCity(cityIndex-1);$('city-next').onclick=()=>selectCity(cityIndex+1);
-for(const el of document.querySelectorAll('button[data-city]'))el.onclick=()=>selectCity(CITIES.findIndex(c=>c.id===el.dataset.city));$('back-to-street').onclick=()=>picker(false);
+for(const el of document.querySelectorAll('button[data-city]'))el.onclick=()=>selectCity(CITIES.findIndex(c=>c.id===el.dataset.city),el.dataset.street);$('back-to-street').onclick=()=>picker(false);
 $('close-place').onclick=()=>$('place-dialog').close();
-$('place-dialog').addEventListener('close',()=>{phase('city');state.reviewFocus?.focus();schedule();});
+$('place-dialog').addEventListener('close',()=>{if(state.phase==='review'){phase('city');state.reviewFocus?.focus();schedule();}});
 $('time-slider').addEventListener('input',event=>{clock.minutes=Number(event.target.value);clock.live=false;applyTime();});
 $('time-now').onclick=()=>{syncClockToNow();$('time-slider').value=String(Math.round(clock.minutes));applyTime(true);};
 // While the clock is live it keeps real time, at one minute of resolution.
@@ -1130,6 +1247,10 @@ function capture(id){
  try{$('world').setPointerCapture(id);}catch{}
 }
 $('world').addEventListener('pointerdown',e=>{
+ if(state.phase==='city'&&machines){
+  const kind=machines.press(e.clientX,e.clientY);
+  if(kind&&kind!=='body'){state.machine=true;capture(e.pointerId);schedule();return;}
+ }
  if(state.phase==='interior'){
   if(e.pointerType==='touch'){
    state.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -1157,6 +1278,12 @@ $('world').addEventListener('pointerdown',e=>{
  state.drag={x:e.clientX,y:e.clientY,distance:state.targetDistance,touch:e.pointerType==='touch'};
  capture(e.pointerId);});
 $('world').addEventListener('pointermove',e=>{
+ if(state.phase==='city'&&machines&&!state.drag){
+  const over=machines.move(e.clientX,e.clientY);
+  $('world').style.cursor=over&&over!=='body'?'pointer':'';
+  schedule();
+  if(state.machine)return;
+ }
  if(state.phase==='interior'){
   if(e.pointerType==='touch'&&state.touches?.has(e.pointerId)){
    state.touches.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -1194,6 +1321,7 @@ $('world').addEventListener('pointermove',e=>{
  else{state.lookX=clamp((e.clientX-state.drag.x)*-.006,-.55,.55);state.lookY=clamp((e.clientY-state.drag.y)*.005,-.35,.35);schedule();}
 });
 function endPointer(e){
+ if(state.machine){machines?.release();state.machine=false;schedule();}
  if(state.phase==='interior'&&state.press&&e&&e.type==='pointerup'&&state.press.id===e.pointerId){
   const press=state.press;state.press=null;
   const travelled=Math.hypot(e.clientX-press.x,e.clientY-press.y);
@@ -1278,6 +1406,7 @@ document.addEventListener('mousemove',e=>{
  schedule();
 });
 document.addEventListener('keydown',e=>{
+ if(transit.active)return;
  if(state.phase==='interior'){
   // Escape unwinds one thing at a time: the mouse, the menu, the bottle, the seat, the
   // dish panel, and only then the room.
@@ -1323,5 +1452,15 @@ window.addEventListener('resize',resize);
 reduced.addEventListener('change',()=>{if(reduced.matches&&state.phase==='tunnel')showCity();schedule();});
 $('world').addEventListener('webglcontextlost',e=>{e.preventDefault();cancelAnimationFrame(raf);raf=0;fallback('The 3D view was interrupted.');});
 // Read-only diagnostics for local visual QA; no hidden shortcuts change the scene.
-window.foldedCityStatus=()=>({phase:state.phase,minutes:clock.minutes,weekday:clock.weekday,live:clock.live,sunAltitude:sunlit.sunAltitude,moonAltitude:sunlit.moonAltitude,night:sunlit.night,openNow:openCount(),fold:uniform.fold.value,bendStart:uniform.start.value,city:CITIES[cityIndex].id,distance:state.distance,targetDistance:state.targetDistance,camera:camera?.position.toArray(),...stats,drawCalls:renderer?.info.render.calls,renderCount});
+window.foldedCityStatus=()=>({phase:state.phase,tunnelProgress:Math.min(1,state.time/9.5),minutes:clock.minutes,weekday:clock.weekday,live:clock.live,sunAltitude:sunlit.sunAltitude,moonAltitude:sunlit.moonAltitude,night:sunlit.night,openNow:openCount(),fold:uniform.fold.value,bendStart:uniform.start.value,city:CITIES[cityIndex].id,distance:state.distance,targetDistance:state.targetDistance,camera:camera?.position.toArray(),...stats,drawCalls:renderer?.info.render.calls,renderCount});
 load();
+
+
+window.streetModelStatus=()=>({street:streetLayout?.street,model:CITIES[cityIndex].model,
+ people:streetCrowd.length,visiblePeople:streetCrowd.filter(p=>p.entry.person.visible).length,
+ walkers:streetCrowd.filter(p=>p.walker).length,activities:[...new Set(streetCrowd.map(p=>p.motion))],characters:[...new Set(streetCrowd.map(p=>p.entry.character))],activeLights:lampLights.filter(l=>l.visible).length,
+ visibleOpenMeshes:[...shopParts.values()].reduce((n,g)=>n+g.open.filter(o=>o.visible).length,0),
+ visibleShutMeshes:[...shopParts.values()].reduce((n,g)=>n+g.shut.filter(o=>o.visible).length,0),
+ landscape:landscapeStats,sourceFootprints:streetLayout?.occluders.length});
+
+window.interiorStatus=()=>({id:interiorId,ready:interior?.ready||false,phase:state.phase,position:interior?[interior.walker.x,interior.walker.floor,interior.walker.z]:null,stats:interior?.stats,lightsOn:interior?.lightsOn});

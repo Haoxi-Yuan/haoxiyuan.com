@@ -1,0 +1,13 @@
+Mercedes E Class W212 — Peter_D
+https://sketchfab.com/3d-models/mercedes-e-class-w212-119c5e10733142b197aa53b86f6aeb04
+Creative Commons Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/
+Adapted: optimized dense meshes and textures; right-hand driver controls; left rear door pivot; added taxi roof light. Generic interpretive limousine taxi, not an operator's commissioned vehicle.
+
+Airbus A350 — jhag; original “A350 QTR” by paperscan
+https://sketchfab.com/3d-models/airbus-a350-cfa2836ead8c4278a199a7d34a87f02e
+https://skfb.ly/FtOH
+Creative Commons Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/
+Adapted: normalized scale/orientation and materials; animation added. Original airline texture retained as an aircraft illustration; not an actual flight or airline partnership.
+
+Models obtained from the public Objaverse distribution: https://huggingface.co/datasets/allenai/objaverse
+The cabin window and transition animation are authored by this project. Cloudscape is synthetic ImageGen imagery.
