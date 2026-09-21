@@ -2,16 +2,18 @@ import * as THREE from 'three';
 import { GLTFLoader } from '../assets/vendor/GLTFLoader.js';
 import { DRACOLoader } from '../assets/vendor/DRACOLoader.js';
 import { Daylight, SITES, zoneOffset, zoneLabel, openAt, popularityAt, clockLabel, DAY_NAMES } from './daylight.js';
-import { Interior } from './interior.js?v=26';
+import { InteriorMinimap } from './interior-minimap.js?v=24';
+import { Interior } from './interior.js?v=27';
 import { RoomInteractions } from './room-interactions.js?v=25';
-import { INTERIOR_REGISTRY } from './interior-registry.js?v=27';
-import { KomaInteractions } from './koma-interactions.js?v=24';
+import { INTERIOR_REGISTRY } from './interior-registry.js?v=28';
+import { KomaInteractions } from './koma-interactions.js?v=25';
 import { People } from './people.js?v=28';
 import { Console } from './console.js?v=33';
 import { Transit } from './transit.js?v=22';
 const transit=new Transit();
 
 const $=id=>document.getElementById(id);
+const minimap=new InteriorMinimap($('interior-map'));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const state={phase:'loading',time:0,distance:0,targetDistance:0,paused:false,loaded:false,skip:false,drag:null,lookX:0,lookY:0};
 const CITIES=[
@@ -634,7 +636,7 @@ async function enterInterior(place,slot){
     handling=new KomaInteractions(interior,{
      propsURL:'../assets/folded-city/koma-props-v15.glb',menuURL:'koma-menu-v15.json',
      pagesBase:'../assets/folded-city/koma-menu/',soundsBase:'../assets/folded-city/koma-sounds/',
-     onReading:reading,onHolding:holding=>{document.body.dataset.holding=String(holding);},
+     onChange:schedule,onReading:reading,onHolding:holding=>{document.body.dataset.holding=String(holding);},
      onSeated:seated=>{document.body.dataset.seated=String(seated);},onDish:showDish,
     });
     const decoder=new DRACOLoader().setDecoderPath('../assets/vendor/draco/').setWorkerLimit(2);
@@ -642,6 +644,7 @@ async function enterInterior(place,slot){
     handlingLoad.catch(error=>console.error('Interior props:',error));
    }else{handling=new RoomInteractions(interior);handlingLoad=Promise.resolve();}
   }
+  await handlingLoad;
  }catch(error){
   console.error('KOMA interior:',error);
   await releaseInterior();
@@ -662,6 +665,8 @@ async function enterInterior(place,slot){
  $('interior-name').textContent=place.name;
  $('interior-trading').textContent=trading?(trading.open?'Open now':'Closed now'):'';
  $('interior-hud').hidden=false;
+ minimap.setInterior(interior);
+ $('interior-menu').hidden=!handling?.menus?.length;
  phase('interior');
  interiorZone='';
  $('veil').style.transition='opacity .7s';$('veil').style.opacity='0';
@@ -673,6 +678,7 @@ async function enterInterior(place,slot){
 let interiorRelease=Promise.resolve();
 async function releaseInterior(){
  if(!interior){await interiorRelease;return;}
+ minimap.clear();
  const old=interior,oldHandling=handling,pending=handlingLoad;
  komaPeopleKey='';PEOPLE.remove(komaPeople);komaPeople=[];
  interior=null;interiorLoad=null;handling=null;handlingLoad=null;interiorId=null;
@@ -873,10 +879,12 @@ function interiorFrame(dt){
  }
  // The controls line is an instruction, not a caption; it goes once you are moving.
  if(walker.speed>.4&&!state.interiorMoved&&!interior.inspecting){state.interiorMoved=true;$('interior-hint').hidden=true;}
+ minimap.draw();
+ if(!$('interior-menu').hidden){const available=!!handling?.nearestMenu?.();$('interior-menu').disabled=!available;$('interior-menu').title=available?'Read menu · M':'Walk closer to a table to read its menu';}
  interior.render();
  $('world').dataset.interiorZone=zone;
  $('world').dataset.interiorPosition=[walker.x.toFixed(2),walker.floor.toFixed(2),walker.z.toFixed(2)].join(',');
- return moved||komaPeople.length>0||Math.abs(walker.momentum.x)>1e-3||Math.abs(walker.momentum.y)>1e-3;
+ return handled||moved||komaPeople.length>0||Math.abs(walker.momentum.x)>1e-3||Math.abs(walker.momentum.y)>1e-3;
 }
 
 // --- handling things inside ------------------------------------------------------------
@@ -900,6 +908,7 @@ function showDish(dish){
   const count=document.createElement('span');count.className='muted';
   count.textContent=dish.mentionCount+(dish.mentionCount===1?' review mentions it':' reviews mention it');
   rating.append(value,stars(dish.meanRatingOfMentioningReviews),count);
+  const note=document.createElement('small');note.className='dish-rating-note';note.textContent='Average visit rating of reviews mentioning this dish.';rating.append(note);
   rating.setAttribute('aria-label',value.textContent+' out of 5, the average of '+dish.mentionCount+' reviews that mention this dish');
  }else{
   const none=document.createElement('span');none.className='muted';
@@ -1208,7 +1217,7 @@ function loop(now){raf=0;const dt=clamp((now-last)/1000||.016,0,.05);last=now;re
  if(!document.hidden&&(state.phase==='interior'||machineMoving||(state.phase==='city'&&streetCrowd.length>0)||state.phase==='tunnel'&&!state.paused||state.phase==='ending'||state.phase==='switching'||Math.abs(state.distance-state.targetDistance)>.005||Math.abs(uniform.fold.value-state.foldTarget)>.0001||Math.abs(uniform.start.value-state.startTarget)>.005||Math.abs(stripPosition-stripTarget)>.001||Math.abs(stripVelocity)>.001))schedule();
 }
 function schedule(){if(!raf&&!document.hidden){if(!last||performance.now()-last>250)last=performance.now();raf=requestAnimationFrame(loop);}}
-function resize(){if(!renderer)return;renderer.setSize(innerWidth,innerHeight,false);machines?.resize(innerWidth,innerHeight);for(const c of [camera,tunnelCamera]){c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();}interior?.resize(innerWidth,innerHeight);if(handling?.reading){handling.layoutBook();handling.showSpread(handling.reading.spread);}schedule();}
+function resize(){if(!renderer)return;renderer.setSize(innerWidth,innerHeight,false);machines?.resize(innerWidth,innerHeight);for(const c of [camera,tunnelCamera]){c.aspect=innerWidth/innerHeight;c.updateProjectionMatrix();}interior?.resize(innerWidth,innerHeight);minimap.draw(true);if(handling?.reading){handling.layoutBook();handling.showSpread(handling.reading.spread);}schedule();}
 function move(value){state.targetDistance=clamp(value,0,TRAVEL_MAX);schedule();}
 
 $('skip').onclick=()=>state.phase==='ending'?finishJourney():showCity();$('retry').onclick=()=>{state.skip=true;load();};
@@ -1389,6 +1398,9 @@ document.addEventListener('keyup',e=>{
  if(e.key==='Shift'){interiorKeys.boost=false;schedule();}
 });
 $('interior-leave').onclick=()=>leaveInterior();
+function openNearbyMenu(){if(state.phase!=='interior'||!handling?.ready||handling.reading)return;const menu=handling.nearestMenu?.();if(menu){handling.wake();handling.openMenu(menu);schedule();}}
+$('interior-menu').onclick=openNearbyMenu;
+addEventListener('keydown',event=>{if(event.code==='KeyM'&&state.phase==='interior'&&!event.repeat){event.preventDefault();openNearbyMenu();}});
 
 // Looking indoors is a drag. Pointer lock is no longer requested, since a captured mouse
 // hid the cursor that points at menus and dishes; if a browser grants one anyway (an
@@ -1463,4 +1475,4 @@ window.streetModelStatus=()=>({street:streetLayout?.street,model:CITIES[cityInde
  visibleShutMeshes:[...shopParts.values()].reduce((n,g)=>n+g.shut.filter(o=>o.visible).length,0),
  landscape:landscapeStats,sourceFootprints:streetLayout?.occluders.length});
 
-window.interiorStatus=()=>({id:interiorId,ready:interior?.ready||false,phase:state.phase,position:interior?[interior.walker.x,interior.walker.floor,interior.walker.z]:null,stats:interior?.stats,lightsOn:interior?.lightsOn});
+window.interiorStatus=()=>({id:interiorId,ready:interior?.ready||false,phase:state.phase,position:interior?[interior.walker.x,interior.walker.floor,interior.walker.z]:null,stats:interior?.stats,lightsOn:interior?.lightsOn,minimap:minimap.status,interactions:{ready:!!handling?.ready,menus:handling?.menus?.length||0,reading:!!handling?.reading,spread:handling?.reading?.spread,served:handling?.served?.length||0}});

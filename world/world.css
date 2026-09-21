@@ -86,19 +86,25 @@ body:not([data-phase=city]) #time-mechanism{opacity:0;transform:translateX(-50%)
 .door-spot i{width:9px;height:9px;border-radius:50%;background:#f0b357;box-shadow:0 0 9px #f0b35799;flex-shrink:0}
 .door-spot[data-open=false] i{background:#8c8f93;box-shadow:none}
 .door-spot small{color:#a9b0b5}
-#interior-hud{position:fixed;z-index:9;left:26px;bottom:26px;display:flex;flex-direction:column;gap:9px;max-width:min(430px,calc(100vw - 52px));padding:15px 18px;background:#0b0810b0;backdrop-filter:blur(14px);border:1px solid #ffffff26;border-radius:18px;box-shadow:0 14px 40px #04060c66}
-.interior-place{display:flex;flex-direction:column;gap:3px}
-#interior-name{font-size:19px;font-weight:400;letter-spacing:-.02em}
-#interior-zone{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9aa6ac}
-#interior-hint{margin:0;font-size:12px;line-height:1.55;color:#93a0a6}
-#interior-trading{font-size:11px;letter-spacing:.06em;color:#c6a06a}
+#interior-hud{position:fixed;inset:0;z-index:9;pointer-events:none}
+.interior-place{position:absolute;left:28px;top:29px;display:flex;flex-direction:column;gap:5px;max-width:calc(100vw - 160px);color:#f4f3ed;text-shadow:0 2px 5px #000,0 0 20px #0008}
+#interior-name{font-size:22px;font-weight:600;letter-spacing:-.035em;line-height:1.2}
+#interior-zone{font-size:11px;font-weight:400;letter-spacing:.12em;text-transform:uppercase;color:#e0e2d9}
+.interior-radar{position:absolute;left:28px;bottom:25px;width:218px;pointer-events:auto}
+#interior-map{display:block;width:218px;height:168px;opacity:.93;border:2px solid #111a16bb;border-radius:3px;box-shadow:0 2px 10px #0005;pointer-events:none}
+.interior-map-actions{display:flex;gap:7px;margin-top:7px;justify-content:space-between}
+.interior-map-actions button{display:flex;align-items:center;gap:12px;color:#f3f4ec;background:#16211dce;border:1px solid #a3b2a344;border-radius:3px;padding:6px 9px;font:11px var(--ui);box-shadow:0 1px 5px #0003}
+.interior-map-actions button:hover{background:#38453ae6}
+.interior-map-actions button:disabled{opacity:.58;cursor:default}
+#interior-menu span{border:1px solid #8e9d9066;border-radius:2px;padding:0 3px;font-size:9px}
+#interior-leave{margin-left:auto}
 body[data-pointer-lock=true] #world{cursor:none}
-#interior-leave{align-self:flex-start;color:#d6dde0}
+
 body[data-phase=interior] #time-mechanism,body[data-phase=interior] #city-mechanism,body[data-phase=interior] #shop-labels,body[data-phase=interior] #door-hotspots{opacity:0;pointer-events:none}
 body[data-phase=interior] #world,body[data-phase=entering] #world,body[data-phase=leaving] #world{opacity:1}
 body[data-phase=interior] #world{cursor:grab}
 body[data-phase=interior] #world:active{cursor:grabbing}
-@media(max-width:700px){#interior-hud{left:12px;right:12px;bottom:14px;max-width:none;padding:12px 14px}#interior-name{font-size:17px}#interior-hint{font-size:11px}.door-spot{font-size:12px;padding:8px 12px 8px 10px}}
+@media(max-width:700px){.interior-place{left:17px;top:22px}#interior-name{font-size:18px}#interior-zone{font-size:9px}.interior-radar{left:16px;bottom:16px;width:166px}#interior-map{width:166px;height:131px}.door-spot{font-size:12px;padding:8px 12px 8px 10px}}
 #place-inside{display:inline-block;margin:5px 0 12px 8px;padding:10px 16px;border-radius:20px;border:1px solid #dadce0;background:#1a1a1f;color:#fff;font-size:14px}
 
 /* V17: handling things inside. A crosshair while the mouse is captured, page arrows while
@@ -111,7 +117,7 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 #dish-name{font-size:21px;font-weight:400;line-height:1.28;margin:2px 34px 8px 0}
 #dish-meta{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#80868b}
 #dish-detail{margin:10px 0 0;font-size:14px;font-style:italic;line-height:1.5;color:#3c4043}
-#dish-rating{display:flex;align-items:center;gap:8px;margin:16px 0 4px;font-size:14px;color:#3c4043}
+#dish-rating{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 4px;font-size:14px;color:#3c4043}
 #dish-rating .muted{color:#80868b}
 #dish-quotes .review{padding:14px 0}
 #dish-quotes .review p{font-size:14px;line-height:1.55;margin:8px 0 0}
@@ -294,10 +300,6 @@ body[data-phase=interior] #world:active{cursor:grabbing}
 .icon-button{border:1px solid var(--edge);background:#05070bb0;color:#dbe7f0;backdrop-filter:blur(12px);
  transition:background .25s,border-color .25s,color .25s}
 .icon-button:hover{background:#ffffff1a;border-color:var(--edge-bright);color:#fff}
-#interior-hud{border:1px solid var(--edge);background:var(--glass);background-image:var(--grid);background-size:7px 7px;
- backdrop-filter:blur(16px) saturate(120%)}
-#interior-name{font-weight:800;letter-spacing:-.02em}
-#interior-zone{letter-spacing:.24em}
 @media(prefers-reduced-motion:reduce){
  .chrome,.chrome::before,.chrome::after,#city-picker nav>button,#city-picker nav>button::before,
  #city-picker nav>button>span:last-child{transition:none}
@@ -366,3 +368,8 @@ body[data-machines=on] :is(#city-mechanism,#time-mechanism) :focus-visible{
  position:fixed;width:auto;height:auto;clip-path:none;opacity:1;z-index:20;
  padding:7px 11px;border-radius:8px;background:#05070be6;border:1px solid #cfe6fa;
  color:#eaf3fb;font:500 11px/1.4 var(--ui);letter-spacing:.14em;text-transform:uppercase}
+
+/* Keep the photographed menu unobstructed while it is held up. */
+body[data-reading=true] .interior-radar{visibility:hidden;pointer-events:none}
+
+.dish-rating-note{flex-basis:100%;font-size:11px;font-weight:400;line-height:1.45;color:#68706d}

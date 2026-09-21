@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#08040f">
 <title>Singapore — Haoxi Yuan</title><meta name="description" content="Walk through folded streets in Singapore, Tokyo and London, and explore real places and reviews.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚧</text></svg>">
-<link rel="stylesheet" href="world.css?v=22"><link rel="stylesheet" href="transit.css?v=21"><script type="importmap">{"imports":{"three":"../assets/vendor/three.module.js"}}</script>
+<link rel="stylesheet" href="world.css?v=24"><link rel="stylesheet" href="transit.css?v=21"><script type="importmap">{"imports":{"three":"../assets/vendor/three.module.js"}}</script>
 </head><body data-phase="loading">
 <img id="fallback" src="../assets/folded-city/singapore-poster-v14.jpg" alt="Singapore shophouse visual study">
 <canvas id="world" tabindex="0" aria-label="Walk through Singapore. Scroll to move forward or backward; drag to look around." aria-describedby="walk-instructions"></canvas>
@@ -60,10 +60,11 @@
 <div id="dish-rating"></div><div id="dish-quotes"></div>
 </aside>
 <div id="interior-hud" hidden>
-<div class="interior-place"><strong id="interior-name"></strong><span id="interior-zone"></span><span id="interior-trading"></span></div>
-<p id="interior-hint">W A S D or arrow keys to walk · drag to look · scroll to zoom · double-click to look closer</p>
-<button id="interior-leave" class="quiet">← Back to the street</button>
+<div class="interior-place"><strong id="interior-name"></strong><span id="interior-zone"></span><span id="interior-trading" class="sr-only"></span></div>
+<div class="interior-radar"><canvas id="interior-map" role="img" aria-label="Interior minimap"></canvas><div class="interior-map-actions"><button id="interior-menu" hidden aria-label="Read the nearest table menu">Menu <span>M</span></button><button id="interior-leave" aria-label="Return to the street">↗ <span>Exit</span></button></div></div>
+<p class="sr-only" id="interior-hint">W A S D or arrow keys to walk · drag to look · scroll to zoom · double-click to look closer</p>
+
 </div>
 <p id="interior-status" role="status" class="sr-only"></p>
 </main><noscript><style>#threshold{display:none}#fallback{opacity:1}#city-picker{display:block!important}</style></noscript>
-<script type="module" src="world.js?v=28"></script></body></html>
+<script type="module" src="world.js?v=30"></script></body></html>

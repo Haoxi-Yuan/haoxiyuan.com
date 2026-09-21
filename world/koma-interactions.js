@@ -384,7 +384,13 @@ export class KomaInteractions {
   }
 
   // --- the menu -----------------------------------------------------------------------
+  nearestMenu() {
+    const here=this.camera.getWorldPosition(new THREE.Vector3());
+    return this.menus.filter(menu=>menu.visible&&menu.position.distanceTo(here)<REACH).sort((a,b)=>a.position.distanceToSquared(here)-b.position.distanceToSquared(here))[0]||null;
+  }
+
   openMenu(menu) {
+    if(this.reading||!menu)return;
     const pages = this.menuData.pages;
     const book = new THREE.Group();
     const cover = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.335, 0.010),
@@ -485,7 +491,7 @@ export class KomaInteractions {
       const height = 0.300, width = Math.min(0.226, height * aspect);
       face.scale.set(width, width / aspect, 1);
       face.userData.highlight.visible = false;
-      const texture = this.textureLoader.load(this.options.pagesBase + page.file);
+      const texture = this.textureLoader.load(this.options.pagesBase + page.file,()=>this.options.onChange?.());
       texture.encoding = THREE.sRGBEncoding;
       texture.anisotropy = 8;
       face.material.map?.dispose();

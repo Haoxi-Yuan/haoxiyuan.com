@@ -65,7 +65,7 @@ export class Interior {
       bob: 0, lean: 0, speed: 0,
     };
     this.stats = {};
-    this.fovTarget = FOV;
+    this.fovTarget = this.defaultFov || FOV;
     this.inspecting = null;
     this.flight = null;
   }
@@ -83,6 +83,7 @@ export class Interior {
     ]);
     this.map = collision;
     this.data = data;
+    this.defaultFov = data.viewFov || FOV;
     if(data.exteriorColor!==undefined)this.scene.background=new THREE.Color(data.exteriorColor);
     this.root = gltf.scene;
     this.root.traverse(object => {
@@ -327,8 +328,8 @@ export class Interior {
   /** Put the visitor at the street door, facing into the passage. */
   spawn() {
     const passage = this.data.floors?.passage;
-    const bx = passage ? (passage.x[0] + passage.x[1]) / 2 : -3.7;
-    const by = passage ? passage.y[0] + 1.4 : -28.0;
+    const bx = this.data.spawn?.[0] ?? (passage ? (passage.x[0] + passage.x[1]) / 2 : -3.7);
+    const by = this.data.spawn?.[1] ?? (passage ? passage.y[0] + 1.4 : -28.0);
     this.walker.x = bx;
     this.walker.z = by;
     this.walker.floor = this.floorAt(bx, by) ?? 0.56;
@@ -344,8 +345,8 @@ export class Interior {
     this.walker.speed = 0;
     this.inspecting = null;
     this.flight = null;
-    this.fovTarget = FOV;
-    this.camera.fov = FOV;
+    this.fovTarget = this.defaultFov || FOV;
+    this.camera.fov = this.defaultFov || FOV;
     this.camera.near = 0.05;
     this.camera.updateProjectionMatrix();
     this.place();
@@ -464,7 +465,7 @@ export class Interior {
         view.near, view.far);
       return;
     }
-    this.fovTarget = clamp(this.fovTarget * Math.pow(0.9, steps), FOV_MIN, FOV);
+    this.fovTarget = clamp(this.fovTarget * Math.pow(0.9, steps), FOV_MIN, this.defaultFov || FOV);
   }
 
   easeLens(dt) {
@@ -477,7 +478,7 @@ export class Interior {
   }
 
   /** How far a drag should turn the view: less when zoomed in, so aiming stays steady. */
-  get lookScale() { return this.camera.fov / FOV; }
+  get lookScale() { return this.camera.fov / (this.defaultFov || FOV); }
 
   /**
    * Fly the eye to a point and circle it. `size` is the object's radius when it is known
@@ -497,7 +498,7 @@ export class Interior {
       near: Math.max(INSPECT_NEAR, size * 1.1), far: Math.max(INSPECT_FAR, size * 6),
       pendingAzimuth: 0, pendingElevation: 0,
     };
-    this.fovTarget = FOV;
+    this.fovTarget = this.defaultFov || FOV;
     camera.near = 0.01;
     camera.updateProjectionMatrix();
     this.flight = { t: 0, fromPosition: from, fromQuaternion: camera.quaternion.clone(), back: false };
@@ -651,7 +652,7 @@ export class Interior {
 
   zone() {
     const y = this.walker.z;
-    if(this.data.zones)return this.data.zones.find(zone=>y>=zone.y[0]&&y<=zone.y[1])?.name||'entrance';
+    if(this.data.zones)return this.data.zones.find(zone=>y>=zone.y[0]&&y<=zone.y[1]&&(!zone.x||(this.walker.x>=zone.x[0]&&this.walker.x<=zone.x[1])))?.name||'entrance';
     if (y < -8.2) return 'entrance passage';
     if (y < -0.9) return 'lounge and bar';
     if (y < 4.2) return 'bell bridge';
