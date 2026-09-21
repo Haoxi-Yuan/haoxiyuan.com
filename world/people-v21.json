@@ -133,26 +133,29 @@
           "seconds": 1.2,
           "worstStep": 22.2,
           "seam": 1.3,
+          "channels": 154,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.222483917608947
         },
         "rb-female-adult-03": {
-          "file": "people/clip-walking-rb-female-adult-03.glb",
+          "file": "people/clip-walking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 1.2,
           "worstStep": 22.2,
           "seam": 1.3,
+          "channels": 154,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.222483917608947
         },
         "rb-female-adult-08": {
-          "file": "people/clip-walking-rb-female-adult-08.glb",
+          "file": "people/clip-walking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 1.2,
           "worstStep": 22.2,
           "seam": 1.3,
+          "channels": 154,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.222483917608947
@@ -163,26 +166,29 @@
           "seconds": 1.2,
           "worstStep": 25.2,
           "seam": 0.9,
+          "channels": 155,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.0086444645373773
         },
         "rb-male-adult-08": {
-          "file": "people/clip-walking-rb-male-adult-08.glb",
+          "file": "people/clip-walking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 1.2,
           "worstStep": 25.2,
           "seam": 0.9,
+          "channels": 155,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.0086444645373773
         },
         "rb-male-adult-12": {
-          "file": "people/clip-walking-rb-male-adult-12.glb",
+          "file": "people/clip-walking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 1.2,
           "worstStep": 25.2,
           "seam": 0.9,
+          "channels": 155,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false,
           "referenceSpeed": 1.0086444645373773
@@ -197,24 +203,27 @@
           "seconds": 8.0,
           "worstStep": 4.5,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-standing-idle-rb-female-adult-03.glb",
+          "file": "people/clip-standing-idle-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 4.5,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-standing-idle-rb-female-adult-08.glb",
+          "file": "people/clip-standing-idle-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 4.5,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -224,24 +233,27 @@
           "seconds": 8.0,
           "worstStep": 3.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-standing-idle-rb-male-adult-08.glb",
+          "file": "people/clip-standing-idle-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 3.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-standing-idle-rb-male-adult-12.glb",
+          "file": "people/clip-standing-idle-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 3.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
@@ -255,24 +267,27 @@
           "seconds": 4.466666666666667,
           "worstStep": 28.9,
           "seam": 0.0,
+          "channels": 81,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-looking-around-rb-female-adult-03.glb",
+          "file": "people/clip-looking-around-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 4.466666666666667,
           "worstStep": 28.9,
           "seam": 0.0,
+          "channels": 81,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-looking-around-rb-female-adult-08.glb",
+          "file": "people/clip-looking-around-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 4.466666666666667,
           "worstStep": 28.9,
           "seam": 0.0,
+          "channels": 81,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -282,24 +297,27 @@
           "seconds": 4.6,
           "worstStep": 26.1,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-looking-around-rb-male-adult-08.glb",
+          "file": "people/clip-looking-around-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 4.6,
           "worstStep": 26.1,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-looking-around-rb-male-adult-12.glb",
+          "file": "people/clip-looking-around-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 4.6,
           "worstStep": 26.1,
           "seam": 0.0,
+          "channels": 144,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
@@ -313,24 +331,27 @@
           "seconds": 8.0,
           "worstStep": 28.1,
           "seam": 0.0,
+          "channels": 138,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-talking-rb-female-adult-03.glb",
+          "file": "people/clip-talking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 28.1,
           "seam": 0.0,
+          "channels": 138,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-talking-rb-female-adult-08.glb",
+          "file": "people/clip-talking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 28.1,
           "seam": 0.0,
+          "channels": 138,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -340,24 +361,27 @@
           "seconds": 8.0,
           "worstStep": 15.3,
           "seam": 0.0,
+          "channels": 147,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-talking-rb-male-adult-08.glb",
+          "file": "people/clip-talking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 15.3,
           "seam": 0.0,
+          "channels": 147,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-talking-rb-male-adult-12.glb",
+          "file": "people/clip-talking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 15.3,
           "seam": 0.0,
+          "channels": 147,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
@@ -371,24 +395,27 @@
           "seconds": 8.0,
           "worstStep": 11.4,
           "seam": 0.0,
+          "channels": 146,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-listening-rb-female-adult-03.glb",
+          "file": "people/clip-listening-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 11.4,
           "seam": 0.0,
+          "channels": 146,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-listening-rb-female-adult-08.glb",
+          "file": "people/clip-listening-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 11.4,
           "seam": 0.0,
+          "channels": 146,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -398,24 +425,27 @@
           "seconds": 8.0,
           "worstStep": 5.8,
           "seam": 0.0,
+          "channels": 151,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-listening-rb-male-adult-08.glb",
+          "file": "people/clip-listening-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 5.8,
           "seam": 0.0,
+          "channels": 151,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-listening-rb-male-adult-12.glb",
+          "file": "people/clip-listening-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 5.8,
           "seam": 0.0,
+          "channels": 151,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
@@ -429,24 +459,27 @@
           "seconds": 8.0,
           "worstStep": 21.3,
           "seam": 0.0,
+          "channels": 141,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-phone-rb-female-adult-03.glb",
+          "file": "people/clip-phone-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 21.3,
           "seam": 0.0,
+          "channels": 141,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-phone-rb-female-adult-08.glb",
+          "file": "people/clip-phone-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 21.3,
           "seam": 0.0,
+          "channels": 141,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -456,24 +489,27 @@
           "seconds": 8.0,
           "worstStep": 16.8,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-phone-rb-male-adult-08.glb",
+          "file": "people/clip-phone-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 16.8,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-phone-rb-male-adult-12.glb",
+          "file": "people/clip-phone-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 16.8,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
@@ -487,24 +523,27 @@
           "seconds": 8.0,
           "worstStep": 10.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-03": {
-          "file": "people/clip-drinking-rb-female-adult-03.glb",
+          "file": "people/clip-drinking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 10.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-female-adult-08": {
-          "file": "people/clip-drinking-rb-female-adult-08.glb",
+          "file": "people/clip-drinking-rb-female-adult-01.glb",
           "hips": 0.9232902526855469,
           "seconds": 8.0,
           "worstStep": 10.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
@@ -514,24 +553,27 @@
           "seconds": 8.0,
           "worstStep": 13.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-08": {
-          "file": "people/clip-drinking-rb-male-adult-08.glb",
+          "file": "people/clip-drinking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 13.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         },
         "rb-male-adult-12": {
-          "file": "people/clip-drinking-rb-male-adult-12.glb",
+          "file": "people/clip-drinking-rb-male-adult-01.glb",
           "hips": 0.8951848149299622,
           "seconds": 8.0,
           "worstStep": 13.6,
           "seam": 0.0,
+          "channels": 145,
           "source": "Microsoft Rocketbox native motion; native Biped rotation transfer with per-character bone lengths",
           "rootMotion": false
         }
